@@ -1,4 +1,8 @@
 const SET_SIZE = 3;
+const DECK_SIZE = 3 ** 4;
+
+const deckProgress = document.getElementById('deckProgress');
+const newGameBtn = document.getElementById('newGameBtn');
 
 function range(a, b) {
   if (b === undefined) {
@@ -31,8 +35,7 @@ function popRandom(arr) {
 }
 
 function validateSet(cards) {
-  if (cards.length)
-    return Object.keys(cards[0]).every(k => [1, cards.length].includes(new Set(cards.map(c => c[k])).size));
+  return Object.keys(cards[0]).every(k => [1, cards.length].includes(new Set(cards.map(c => c[k])).size));
 }
 
 function combinations(arr, size) {
@@ -66,7 +69,25 @@ function cardToString(card) {
 
 function renderTable(table) {
   document.querySelector('.game-board').innerHTML = table.map((card, i) => {
-    return `<div class="card ${card.color} ${card.fill} ${card.shape}" data-idx="${i}">${card.number}</div>`
+    const characters = {
+      diamond: {
+        solid: '&#x25C6;',
+        striped: '&#x25C8;',
+        blank: '&#x25C7;',
+      },
+      squiggle: {
+        solid: '&#x25A0;',
+        striped: '&#x25A3;',
+        blank: '&#x25A1;',
+      },
+      oval: {
+        solid: '&#x25CF;',
+        striped: '&#x25C9;',
+        blank: '&#x25CB;',
+      },
+    }
+    let text = range(card.number).map(() => characters[card.shape][card.fill]).join('');
+    return `<div class="card ${card.color}" data-idx="${i}">${text}</div>`
   }).join('');
 }
 
@@ -118,6 +139,11 @@ function play() {
   let table = [];
   let sets = [];
 
+  if (localStorage.deck !== undefined) {
+    deck = localStorage.deck.split(',').map(cardFromString);
+    table = localStorage.table.split(',').map(cardFromString);
+  }
+
   function draw3() {
     if (!deck.length) return [];
     return range(SET_SIZE).map(() => popRandom(deck));
@@ -129,6 +155,7 @@ function play() {
       table.push(...draw3());
       sets = findSets(table);
     }
+    console.log('sets', sets.map(set => set.map(cardToString).sort().join(',')));
   }
 
   function takeSet(set) {
@@ -140,23 +167,42 @@ function play() {
     deal();
   }
 
+  function clickHandler(e) {
+    e.target.classList.toggle('selected');
+    let selected = document.querySelectorAll('.game-board .card.selected');
+    if (selected.length < SET_SIZE) return;
+    selected.forEach(elem => elem.classList.remove('selected'));
+    let set = Array.from(selected).map(elem => table[elem.dataset.idx]);
+    if (validateSet(set)) {
+      takeSet(set);
+      renderTableWithEvents();
+    }
+  }
+
   function renderTableWithEvents() {
+    window.localStorage.deck = deck.map(cardToString).join(',');
+    window.localStorage.table = table.map(cardToString).join(',');
+    deckProgress.value = DECK_SIZE - deck.length;
+    newGameBtn.classList.toggle('hidden', sets.length)
     renderTable(table);
     document.querySelectorAll('.game-board .card').forEach(elem => {
-      elem.addEventListener('click', e => {
-        e.target.classList.toggle('selected');
-        let selected = document.querySelectorAll('.game-board .card.selected');
-        if (selected.length < SET_SIZE) return;
-        selected.forEach(elem => elem.classList.remove('selected'));
-        let set = Array.from(selected).map(elem => table[elem.dataset.idx]);
-        console.log(set, validateSet(set));
-        if (validateSet(set)) {
-          takeSet(set);
-          renderTableWithEvents();
-        }
+      elem.addEventListener('click', clickHandler);
+      elem.addEventListener('touchstart', e => {
+        e.preventDefault();
+        clickHandler(e);
       });
     });
   }
+
+  function newGame() {
+    deck = buildDeck();
+    table = [];
+    sets = [];
+    deal();
+    renderTableWithEvents();
+  }
+
+  newGameBtn.addEventListener('click', newGame);
 
   deal();
   renderTableWithEvents();
