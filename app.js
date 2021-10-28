@@ -140,8 +140,8 @@ function play() {
   let sets = [];
 
   if (localStorage.deck !== undefined) {
-    deck = localStorage.deck.split(',').map(cardFromString);
-    table = localStorage.table.split(',').map(cardFromString);
+    deck = localStorage.deck.length ? localStorage.deck.split(',').map(cardFromString) : [];
+    table = localStorage.table.length ? localStorage.table.split(',').map(cardFromString) : [];
   }
 
   function draw3() {
@@ -155,7 +155,7 @@ function play() {
       table.push(...draw3());
       sets = findSets(table);
     }
-    console.log('sets', sets.map(set => set.map(cardToString).sort().join(',')));
+    // console.log('sets', sets.map(set => set.map(cardToString).sort().join(',')));
   }
 
   function takeSet(set) {
