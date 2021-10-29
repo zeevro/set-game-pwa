@@ -2,7 +2,9 @@ const SET_SIZE = 3;
 const DECK_SIZE = 3 ** 4;
 
 const deckProgress = document.getElementById('deckProgress');
+const deckProgressLabel = document.getElementById('deckProgressLabel');
 const newGameBtn = document.getElementById('newGameBtn');
+const gameBoard = document.querySelector('.game-board');
 
 function range(a, b) {
   if (b === undefined) {
@@ -14,14 +16,14 @@ function range(a, b) {
 function buildDeck() {
   let deck = [];
   for (number of [1, 2, 3]) {
-    for (shape of ['diamond', 'squiggle', 'oval']) {
+    for (fill of ['solid', 'striped', 'blank']) {
       for (color of ['red', 'purple', 'green']) {
-        for (fill of ['solid', 'striped', 'blank']) {
+        for (shape of ['diamond', 'squiggle', 'oval']) {
           deck.push({
             number: number,
-            shape: shape,
-            color: color,
             fill: fill,
+            color: color,
+            shape: shape,
           });
         }
       }
@@ -67,28 +69,26 @@ function cardToString(card) {
   return card.number.toString() + { solid: 's', striped: 'p', blank: 'b' }[card.fill] + card.color.substr(0, 1) + card.shape.substr(0, 1);
 }
 
-function renderTable(table) {
-  document.querySelector('.game-board').innerHTML = table.map((card, i) => {
-    const characters = {
-      diamond: {
-        solid: '&#x25C6;',
-        striped: '&#x25C8;',
-        blank: '&#x25C7;',
-      },
-      squiggle: {
-        solid: '&#x25A0;',
-        striped: '&#x25A3;',
-        blank: '&#x25A1;',
-      },
-      oval: {
-        solid: '&#x25CF;',
-        striped: '&#x25C9;',
-        blank: '&#x25CB;',
-      },
-    }
-    let text = range(card.number).map(() => characters[card.shape][card.fill]).join('');
-    return `<div class="card ${card.color}" data-idx="${i}">${text}</div>`
-  }).join('');
+function cardToHtml(card, idx) {
+  const characters = {
+    diamond: {
+      solid: '&#x25C6;',
+      striped: '&#x25C8;',
+      blank: '&#x25C7;',
+    },
+    squiggle: {
+      solid: '&#x25A0;',
+      striped: '&#x25A3;',
+      blank: '&#x25A1;',
+    },
+    oval: {
+      solid: '&#x25CF;',
+      striped: '&#x25C9;',
+      blank: '&#x25CB;',
+    },
+  }
+  let text = range(card.number).map(() => characters[card.shape][card.fill]).join('');
+  return `<div class="card ${card.color}" ${idx !== undefined ? ('data-idx="' + idx + '" ') : ''}data-params="${cardToString(card)}">${text}</div>`
 }
 
 async function playRandom() {
@@ -103,7 +103,7 @@ async function playRandom() {
   let sets = [];
   while (deck.length || sets.length) {
     console.log('table', table.map(cardToString));
-    renderTable(table);
+    gameBoard.innerHTML = table.map(cardToHtml).join('');
 
     await sleep(sleepTime);
 
@@ -175,16 +175,17 @@ function play() {
     let set = Array.from(selected).map(elem => table[elem.dataset.idx]);
     if (validateSet(set)) {
       takeSet(set);
-      renderTableWithEvents();
+      renderTable();
     }
   }
 
-  function renderTableWithEvents() {
+  function renderTable() {
     window.localStorage.deck = deck.map(cardToString).join(',');
     window.localStorage.table = table.map(cardToString).join(',');
     deckProgress.value = DECK_SIZE - deck.length;
-    newGameBtn.classList.toggle('hidden', sets.length)
-    renderTable(table);
+    deckProgressLabel.innerHTML = `Cards in deck: ${deck.length}`;
+    newGameBtn.classList.toggle('hidden', sets.length);
+    gameBoard.innerHTML = table.map(cardToHtml).join('');
     document.querySelectorAll('.game-board .card').forEach(elem => {
       elem.addEventListener('click', clickHandler);
       elem.addEventListener('touchstart', e => {
@@ -199,13 +200,13 @@ function play() {
     table = [];
     sets = [];
     deal();
-    renderTableWithEvents();
+    renderTable();
   }
 
   newGameBtn.addEventListener('click', newGame);
 
   deal();
-  renderTableWithEvents();
+  renderTable();
 }
 
 play();

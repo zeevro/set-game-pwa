@@ -17,10 +17,24 @@ html, body {
   flex-direction: column;
 }
 
+.progress-container {
+  height: 50px;
+}
+
 #deckProgress {
   width: 100%;
-  height: 50px;
-  color: yellow;
+  height: 100%;
+}
+
+#deckProgressLabel {
+  width: 100%;
+  text-align: center;
+  font-size: 120%;
+  position: absolute;
+  top: calc(25px - 0.6em);
+  left: 0;
+  color: black;
+  text-shadow: -1px -1px 1px lightblue, 1px -1px 1px lightblue, -1px 1px 1px lightblue, 1px 1px 1px lightblue;
 }
 
 #newGameBtn {
