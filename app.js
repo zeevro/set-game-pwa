@@ -88,7 +88,7 @@ function cardToHtml(card, idx) {
       case 'solid': return colors[card.color];
     }
   }
-  svg = card => `<svg viewbox="-2 -2 54 104"><path d="${paths[card.shape]}" fill="${fill(card)}" /></svg>`;
+  svg = card => `<svg viewbox="-6 -6 62 112"><path d="${paths[card.shape]}" fill="${fill(card)}" /></svg>`;
 
   return `<div class="card ${card.color}${card.new ? ' new' : ''}"${idx !== undefined ? (' data-idx="' + idx + '" ') : ''}">
     <div class="card-content">
