@@ -1,5 +1,6 @@
 const SET_SIZE = 3;
-const DECK_SIZE = 3 ** 4;
+const DECK_SIZE = SET_SIZE ** 4;
+const TABLE_SIZE = SET_SIZE * 4;
 
 const deckProgress = document.getElementById('deckProgress');
 const deckProgressLabel = document.getElementById('deckProgressLabel');
@@ -113,7 +114,7 @@ function play() {
 
   function deal() {
     sets = findSets(table);
-    while (deck.length && (table.length < 12 || !sets.length)) {
+    while (deck.length && (table.length < TABLE_SIZE || !sets.length)) {
       table.push(...draw3());
       sets = findSets(table);
     }
@@ -121,7 +122,8 @@ function play() {
   }
 
   function takeSet(set) {
-    if (deck.length) {
+    sets = findSets(table);
+    if (deck.length && !sets.length) {
       set.forEach(card => table.splice(table.indexOf(card), 1, {new: true, ...popRandom(deck)}));
     } else {
       set.forEach(card => table.splice(table.indexOf(card), 1));
@@ -170,6 +172,8 @@ function play() {
   }
 
   newGameBtn.addEventListener('click', newGame);
+
+  if ('wakeLock' in navigator) wakeLock = navigator.wakeLock.request('screen').catch(console.error);
 
   deal();
   renderTable();
