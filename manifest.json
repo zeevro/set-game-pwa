@@ -1,0 +1,32 @@
+{
+  "name": "Set Game",
+  "short_name": "Set",
+  "theme_color": "#1d3d70",
+  "background_color": "#071f45",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "./",
+  "start_url": "./",
+  "icons": [
+    {
+      "src": "icons/icon-32.png",
+      "sizes": "32x32"
+    },
+    {
+      "src": "icons/icon-48.png",
+      "sizes": "48x48"
+    },
+    {
+      "src": "icons/icon-72.png",
+      "sizes": "72x72"
+    },
+    {
+      "src": "icons/icon-96.png",
+      "sizes": "96x96"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512"
+    }
+  ]
+}

@@ -1,3 +1,9 @@
+window.addEventListener("load", () => {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js");
+  }
+});
+
 const SET_SIZE = 3;
 const DECK_SIZE = SET_SIZE ** 4;
 const TABLE_SIZE = SET_SIZE * 4;
