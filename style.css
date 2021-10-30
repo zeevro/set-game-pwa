@@ -15,6 +15,11 @@ html, body {
   background-color: darkblue;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.bad-set {
+  animation: bad-set 0.8s;
 }
 
 .progress-container {
@@ -51,36 +56,76 @@ html, body {
   align-items: center;
   align-content: space-around;
   justify-content: space-evenly;
+  padding: 0 6px;
 }
 
 .card {
-  background-color: whitesmoke;
-  display: inline-block;
-  text-align: center;
-  font-size: xxx-large;
-  border: 1px solid black;
-  border-radius: 5px;
-  height: 80px;
-  width: 125px;
-  margin-left: calc((30% - 125px) / 2);
-  margin-right: calc((30% - 125px) / 2);
+  background: whitesmoke;
+  margin: 5px;
+  width: calc(33.33% - 10px);
+  padding-top: 20%;
+  cursor: pointer;
+  border-radius: 10px;
+  position: relative;
+}
+
+.card-content {
+  height: 100%;
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+}
+
+.card-content svg {
+  height: 100%;
+  margin: 0 2%;
 }
 
 .card.selected {
-  box-shadow: 5px 5px lightgray;
+  box-shadow: 4px 4px lightgray;
   position: relative;
-  top: -5px;
-  left: -5px;
+  top: -4px;
+  left: -4px;
 }
 
-.card.red {
-  color: red;
+svg path {
+  stroke-width: 4;
 }
 
-.card.green {
-  color: green;
+.card.new {
+  animation: card-flip .4s ease;
 }
 
-.card.purple {
-  color: darkorchid;
+.red path {
+  stroke: red;
+}
+
+.green path {
+  stroke: green;
+}
+
+.purple path {
+  stroke: darkorchid;
+}
+
+@keyframes bad-set {
+  0% {
+    background-color: darkred;
+  }
+  1000% {
+    background-color: inherit;
+  }
+}
+
+@keyframes card-flip {
+  0% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
 }

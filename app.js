@@ -70,69 +70,31 @@ function cardToString(card) {
 }
 
 function cardToHtml(card, idx) {
-  const characters = {
-    diamond: {
-      solid: '&#x25C6;',
-      striped: '&#x25C8;',
-      blank: '&#x25C7;',
-    },
-    squiggle: {
-      solid: '&#x25A0;',
-      striped: '&#x25A3;',
-      blank: '&#x25A1;',
-    },
-    oval: {
-      solid: '&#x25CF;',
-      striped: '&#x25C9;',
-      blank: '&#x25CB;',
-    },
+  const paths = {
+    diamond: "M25 0 L50 50 L25 100 L0 50 Z",
+    squiggle: "M38.4,63.4c0,16.1,11,19.9,10.6,28.3c-0.5,9.2-21.1,12.2-33.4,3.8s-15.8-21.2-9.3-38c3.7-7.5,4.9-14,4.8-20 c0-16.1-11-19.9-10.6-28.3C1,0.1,21.6-3,33.9,5.5s15.8,21.2,9.3,38C40.4,50.6,38.5,57.4,38.4,63.4z",
+    oval: "M25,99.5C14.2,99.5,5.5,90.8,5.5,80V20C5.5,9.2,14.2,0.5,25,0.5S44.5,9.2,44.5,20v60 C44.5,90.8,35.8,99.5,25,99.5z",
   }
-  let text = range(card.number).map(() => characters[card.shape][card.fill]).join('');
-  return `<div class="card ${card.color}" ${idx !== undefined ? ('data-idx="' + idx + '" ') : ''}data-params="${cardToString(card)}">${text}</div>`
-}
-
-async function playRandom() {
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  const colors = {
+    red: 'red',
+    green: 'green',
+    purple: 'darkorchid',
   }
-
-  const sleepTime = 1000;
-
-  let deck = buildDeck();
-  let table = range(12).map(() => popRandom(deck));
-  let sets = [];
-  while (deck.length || sets.length) {
-    console.log('table', table.map(cardToString));
-    gameBoard.innerHTML = table.map(cardToHtml).join('');
-
-    await sleep(sleepTime);
-
-    sets = findSets(table);
-    if (!sets.length) {
-      console.log('no sets found')
-      if (deck.length) {
-        table.push(...range(SET_SIZE).map(() => popRandom(deck)));
-      }
-      continue;
+  fill = card => {
+    switch (card.fill) {
+      case 'blank': return 'none';
+      case 'striped': return `url(#striped-${card.color})`;
+      case 'solid': return colors[card.color];
     }
-    console.log('sets', sets.map(set => set.map(cardToString).join(',')));
-
-    await sleep(sleepTime);
-
-    let set = popRandom(sets);
-    console.log('chosen set', table.map(cardToString));
-    if (deck.length) {
-      set.forEach(card => table.splice(table.indexOf(card), 1, popRandom(deck)));
-    } else {
-      set.forEach(card => table.splice(table.indexOf(card), 1));
-    }
-
-    await sleep(sleepTime);
   }
-  console.log('final table', table.map(cardToString));
-}
+  svg = card => `<svg viewbox="-2 -2 54 104"><path d="${paths[card.shape]}" fill="${fill(card)}" /></svg>`;
 
-// playRandom();
+  return `<div class="card ${card.color}${card.new ? ' new' : ''}"${idx !== undefined ? (' data-idx="' + idx + '" ') : ''}">
+    <div class="card-content">
+      ${range(card.number).map(() => svg(card)).join('')}
+    </div>
+  </div>`;
+}
 
 function play() {
   let deck = buildDeck();
@@ -160,7 +122,7 @@ function play() {
 
   function takeSet(set) {
     if (deck.length) {
-      set.forEach(card => table.splice(table.indexOf(card), 1, popRandom(deck)));
+      set.forEach(card => table.splice(table.indexOf(card), 1, {new: true, ...popRandom(deck)}));
     } else {
       set.forEach(card => table.splice(table.indexOf(card), 1));
     }
@@ -168,7 +130,7 @@ function play() {
   }
 
   function clickHandler(e) {
-    e.target.classList.toggle('selected');
+    e.target.closest('.card').classList.toggle('selected');
     let selected = document.querySelectorAll('.game-board .card.selected');
     if (selected.length < SET_SIZE) return;
     selected.forEach(elem => elem.classList.remove('selected'));
@@ -176,6 +138,9 @@ function play() {
     if (validateSet(set)) {
       takeSet(set);
       renderTable();
+    } else {
+      gameBoard.classList.add('bad-set');
+      setTimeout(() => gameBoard.classList.remove('bad-set'), 800);
     }
   }
 
@@ -186,6 +151,7 @@ function play() {
     deckProgressLabel.innerHTML = `Cards in deck: ${deck.length}`;
     newGameBtn.classList.toggle('hidden', sets.length);
     gameBoard.innerHTML = table.map(cardToHtml).join('');
+    table.forEach(card => { delete card.new; });
     document.querySelectorAll('.game-board .card').forEach(elem => {
       elem.addEventListener('click', clickHandler);
       elem.addEventListener('touchstart', e => {
