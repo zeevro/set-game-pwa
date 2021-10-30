@@ -2,9 +2,10 @@ const SET_SIZE = 3;
 const DECK_SIZE = SET_SIZE ** 4;
 const TABLE_SIZE = SET_SIZE * 4;
 
-const deckProgress = document.getElementById('deckProgress');
-const deckProgressLabel = document.getElementById('deckProgressLabel');
-const newGameBtn = document.getElementById('newGameBtn');
+const deckProgress = document.querySelector('#deckProgress');
+const deckProgressLabel = document.querySelector('#deckProgressLabel');
+const newGameBtn = document.querySelector('#newGameBtn');
+const container = document.querySelector('.container');
 const gameBoard = document.querySelector('.game-board');
 
 const allCssRules = Object.fromEntries(Array.from(document.styleSheets).flatMap(ss => Array.from(ss.cssRules)).map(r => [r.selectorText, r.style]));
@@ -139,8 +140,8 @@ function play() {
       takeSet(set);
       renderTable();
     } else {
-      gameBoard.classList.add('bad-set');
-      setTimeout(() => gameBoard.classList.remove('bad-set'), 800);
+      container.classList.add('bad-set');
+      setTimeout(() => container.classList.remove('bad-set'), 800);
     }
   }
 
