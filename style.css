@@ -51,6 +51,9 @@ html, body {
 
 .game-board {
   height: 100%;
+  width: 100%;
+  max-width: 60vh;
+  align-self: center;
   display: flex;
   flex-flow: row wrap;
   align-items: center;
