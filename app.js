@@ -127,8 +127,8 @@ function play() {
   }
 
   function takeSet(set) {
-    sets = findSets(table);
-    if (deck.length && !sets.length) {
+    sets = findSets(table.filter(card => !set.includes(card)));
+    if (deck.length && (table.length <= TABLE_SIZE || !sets.length)) {
       set.forEach(card => table.splice(table.indexOf(card), 1, {new: true, ...popRandom(deck)}));
     } else {
       set.forEach(card => table.splice(table.indexOf(card), 1));
@@ -145,6 +145,7 @@ function play() {
     if (validateSet(set)) {
       takeSet(set);
       renderTable();
+      // selected.forEach(elem => gameBoard.children[elem.dataset.idx].classList.add('new'));
     } else {
       container.classList.add('bad-set');
       setTimeout(() => container.classList.remove('bad-set'), 800);
