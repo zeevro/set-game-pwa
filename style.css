@@ -95,8 +95,12 @@ html, body {
   top: -7px;
 }
 
-svg path {
+.card path {
   stroke-width: 6;
+}
+
+.pattern path {
+  stroke-width: 8;
 }
 
 .card.new {
