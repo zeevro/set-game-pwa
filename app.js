@@ -179,10 +179,26 @@ function play() {
 
   newGameBtn.addEventListener('click', newGame);
 
-  if ('wakeLock' in navigator) wakeLock = navigator.wakeLock.request('screen').catch(console.error);
-
   deal();
   renderTable();
+}
+
+if ('wakeLock' in navigator) {
+  let wakeLock = null;
+  const requestWakeLock = async () => {
+    wakeLock = await navigator.wakeLock.request('screen');
+  };
+
+  const handleVisibilityChange = () => {
+    if (wakeLock !== null && wakeLock.released && document.visibilityState === 'visible') {
+      requestWakeLock();
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  document.addEventListener('fullscreenchange', handleVisibilityChange);
+
+  requestWakeLock();
 }
 
 play();
