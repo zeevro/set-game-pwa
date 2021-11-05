@@ -17,6 +17,30 @@ const gameBoard = document.querySelector('.game-board');
 const allCssRules = Object.fromEntries(Array.from(document.styleSheets).flatMap(ss => Array.from(ss.cssRules)).map(r => [r.selectorText, r.style]));
 const colors = Object.fromEntries(['red', 'green', 'purple'].map(color => [color, allCssRules[`.${color} path`].stroke]));
 
+function removeLegacy() {
+  ['deck', 'table'].forEach(k => localStorage.removeItem(k));
+}
+
+function initWakeLock() {
+  if ('wakeLock' in navigator) {
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      wakeLock = await navigator.wakeLock.request('screen');
+    };
+
+    const handleVisibilityChange = () => {
+      if (wakeLock !== null && wakeLock.released && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('fullscreenchange', handleVisibilityChange);
+
+    requestWakeLock();
+  }
+}
+
 function range(a, b) {
   if (b === undefined) {
     return Array.from(new Array(a).keys());
@@ -26,25 +50,22 @@ function range(a, b) {
 
 function buildDeck() {
   let deck = [];
-  for (number of [1, 2, 3]) {
-    for (fill of ['solid', 'striped', 'blank']) {
-      for (color of ['red', 'purple', 'green']) {
-        for (shape of ['diamond', 'squiggle', 'oval']) {
-          deck.push({
+  for (let number of [1, 2, 3]) {
+    for (let fill of ['solid', 'striped', 'blank']) {
+      for (let color of ['red', 'purple', 'green']) {
+        for (let shape of ['diamond', 'squiggle', 'oval']) {
+          let card = {
             number: number,
             fill: fill,
             color: color,
             shape: shape,
-          });
+          }
+          deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, card);
         }
       }
     }
   }
   return deck;
-}
-
-function popRandom(arr) {
-  return arr.splice(Math.floor(Math.random() * arr.length), 1)[0];
 }
 
 function validateSet(cards) {
@@ -67,17 +88,47 @@ function findSets(cards) {
   return combinations(cards, SET_SIZE).filter(validateSet);
 }
 
-function cardFromString(s) {
-  return {
-    number: parseInt(s.substr(0, 1)),
-    fill: { s: 'solid', p: 'striped', b: 'blank' }[s.substr(1, 1)],
-    color: { r: 'red', p: 'purple', g: 'green' }[s.substr(2, 1)],
-    shape: { d: 'diamond', s: 'squiggle', o: 'oval' }[s.substr(3, 1)],
+function cardFromString(str) {
+  let card = {
+    number: parseInt(str.substr(0, 1)),
+    fill: { s: 'solid', p: 'striped', b: 'blank' }[str.substr(1, 1)],
+    color: { r: 'red', p: 'purple', g: 'green' }[str.substr(2, 1)],
+    shape: { d: 'diamond', s: 'squiggle', o: 'oval' }[str.substr(3, 1)],
   };
+  if (Object.values(card).includes(undefined)) throw `Invalid card string! ${byte}`;
+  return card;
 }
 
 function cardToString(card) {
   return card.number.toString() + { solid: 's', striped: 'p', blank: 'b' }[card.fill] + card.color.substr(0, 1) + card.shape.substr(0, 1);
+}
+
+function cardFromByte(byte) {
+  let card = {
+    number: (byte >> 6 & 3) + 1,
+    fill: ['solid', 'striped', 'blank'][byte >> 4 & 3],
+    color: ['red', 'purple', 'green'][byte >> 2 & 3],
+    shape: ['diamond', 'squiggle', 'oval'][byte & 3],
+  };
+  if (Object.values(card).includes(undefined)) throw `Invalid card byte! ${byte}`;
+  return card;
+}
+
+function cardToByte(card) {
+  return (
+    (card.number - 1) << 6 |
+    { solid: 0, striped: 1, blank: 2 }[card.fill] << 4 |
+    { red: 0, purple: 1, green: 2 }[card.color] << 2 |
+    { diamond: 0, squiggle: 1, oval: 2 }[card.shape]
+  );
+}
+
+function dumpState(deck, table) {
+  return [deck, table].map(cards => btoa(String.fromCharCode(...cards.map(cardToByte)))).join('_');
+}
+
+function loadState(str) {
+  return str.split('_').map(part => [...atob(part)].map(c => cardFromByte(c.charCodeAt(0))));
 }
 
 function cardToHtml(card, idx) {
@@ -102,34 +153,50 @@ function cardToHtml(card, idx) {
   </div>`;
 }
 
+let deck = null;
+let table = [];
+let sets = [];
+let saveState = true;
+
 function play() {
-  let deck = buildDeck();
-  let table = [];
-  let sets = [];
+  function initGameState() {
+    if (location.hash && location.hash.substr(1) != localStorage.state) {
+      try {
+        [deck, table] = loadState(location.hash.substr(1));
+        saveState = (localStorage.state !== undefined) && confirm('Would you like to replace your old game?');
+        return;
+      } catch (err) {
+        console.log(err);
+        alert('Invalid state code');
+      }
+    }
 
-  if (localStorage.deck !== undefined) {
-    deck = localStorage.deck.length ? localStorage.deck.split(',').map(cardFromString) : [];
-    table = localStorage.table.length ? localStorage.table.split(',').map(cardFromString) : [];
-  }
+    if (localStorage.state !== undefined) {
+      try {
+        [deck, table] = loadState(localStorage.state);
+        return;
+      } catch (err) {
+        console.log(err);
+      }
+    }
 
-  function draw3() {
-    if (!deck.length) return [];
-    return range(SET_SIZE).map(() => popRandom(deck));
+    deck = buildDeck();
   }
 
   function deal() {
     sets = findSets(table);
     while (deck.length && (table.length < TABLE_SIZE || !sets.length)) {
-      table.push(...draw3());
+      table.push(...deck.splice(-SET_SIZE));
       sets = findSets(table);
     }
     // console.log('sets', sets.map(set => set.map(cardToString).sort().join(',')));
+    renderTable();
   }
 
   function takeSet(set) {
     sets = findSets(table.filter(card => !set.includes(card)));
     if (deck.length && (table.length <= TABLE_SIZE || !sets.length)) {
-      set.forEach(card => table.splice(table.indexOf(card), 1, {new: true, ...popRandom(deck)}));
+      set.forEach(card => table.splice(table.indexOf(card), 1, { new: true, ...deck.pop() }));
     } else {
       set.forEach(card => table.splice(table.indexOf(card), 1));
     }
@@ -144,7 +211,6 @@ function play() {
     let set = Array.from(selected).map(elem => table[elem.dataset.idx]);
     if (validateSet(set)) {
       takeSet(set);
-      renderTable();
       // selected.forEach(elem => gameBoard.children[elem.dataset.idx].classList.add('new'));
     } else {
       container.classList.add('bad-set');
@@ -153,12 +219,15 @@ function play() {
   }
 
   function renderTable() {
-    window.localStorage.deck = deck.map(cardToString).join(',');
-    window.localStorage.table = table.map(cardToString).join(',');
+    localStorage.state = location.hash = dumpState(deck, table);
+
     deckProgress.value = DECK_SIZE - deck.length;
     deckProgressLabel.innerHTML = `Cards in deck: ${deck.length}`;
+
     newGameBtn.classList.toggle('hidden', sets.length);
+
     gameBoard.innerHTML = table.map(cardToHtml).join('');
+
     table.forEach(card => { delete card.new; });
     document.querySelectorAll('.game-board .card').forEach(elem => {
       elem.addEventListener('click', clickHandler);
@@ -169,36 +238,20 @@ function play() {
     });
   }
 
-  function newGame() {
+  newGameBtn.addEventListener('click', () => {
     deck = buildDeck();
     table = [];
-    sets = [];
     deal();
-    renderTable();
-  }
+  });
 
-  newGameBtn.addEventListener('click', newGame);
-
+  initGameState();
   deal();
-  renderTable();
 }
 
-if ('wakeLock' in navigator) {
-  let wakeLock = null;
-  const requestWakeLock = async () => {
-    wakeLock = await navigator.wakeLock.request('screen');
-  };
+// document.querySelector('.progress-container').addEventListener('click', () => {
+//   alert('click');
+// });
 
-  const handleVisibilityChange = () => {
-    if (wakeLock !== null && wakeLock.released && document.visibilityState === 'visible') {
-      requestWakeLock();
-    }
-  };
-
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  document.addEventListener('fullscreenchange', handleVisibilityChange);
-
-  requestWakeLock();
-}
-
+removeLegacy();
+initWakeLock();
 play();
