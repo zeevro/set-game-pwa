@@ -104,11 +104,11 @@ html, body {
 }
 
 .card.new {
-  animation: card-flip .4s ease;
+  animation: card-flip 0.4s ease;
 }
 
 .red path {
-  stroke: #EE0000;
+  stroke: #ee0000;
 }
 
 .green path {
