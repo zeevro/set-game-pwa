@@ -163,7 +163,7 @@ function play() {
     if (location.hash && location.hash.substr(1) != localStorage.state) {
       try {
         [deck, table] = loadState(location.hash.substr(1));
-        saveState = (localStorage.state !== undefined) && confirm('Would you like to replace your old game?');
+        // saveState = (localStorage.state !== undefined) && confirm('Would you like to replace your old game?');
         return;
       } catch (err) {
         console.log(err);
