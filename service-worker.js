@@ -3,7 +3,8 @@ var filesToCache = [
   './',
   './index.html',
   './app.js',
-  './style.css'
+  './style.css',
+  './gear-2.svg',
 ];
 
 self.addEventListener('install', function(e) {
