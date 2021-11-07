@@ -22,22 +22,54 @@
         <pattern id="striped-red" class="red pattern" patternUnits="userSpaceOnUse" width="10" height="10">
           <path d="M-10,10 H10" />
         </pattern>
-        <pattern id="striped-green" class="green pattern" patternUnits="userSpaceOnUse" width="10" height="10">
+        <pattern id="striped-purple" class="purple pattern" patternUnits="userSpaceOnUse" width="10" height="10">
           <path d="M-10,10 H10" />
         </pattern>
-        <pattern id="striped-purple" class="purple pattern" patternUnits="userSpaceOnUse" width="10" height="10">
+        <pattern id="striped-green" class="green pattern" patternUnits="userSpaceOnUse" width="10" height="10">
           <path d="M-10,10 H10" />
         </pattern>
       </defs>
     </svg>
+
     <div class="container">
-      <div class="progress-container">
-        <progress id="deckProgress" max="81" value="81"></progress>
-        <label id="deckProgressLabel">Cards in deck: 81</label>
+      <div class="top-bar">
+        <div class="progress-container">
+          <progress id="deckProgress" max="81" value="81"></progress>
+          <div id="deckProgressLabel">Cards in deck: 81</div>
+        </div>
+        <div id="settingsBtn" style="display: none">
+          <img src="gear-2.svg" alt="Settings">
+        </div>
       </div>
       <div class="game-board"></div>
       <button id="newGameBtn" class="hidden">NEW GAME</button>
     </div>
+
+    <div id="settingsModal" class="modal">
+      <div class="modal-content">
+        <span class="modal-title">Colors:</span>
+        <label><input type="radio" name="speed_unit" value="kts">Knots</label>
+        <label><input type="radio" name="speed_unit" value="mph">MPH</label>
+        <label><input type="radio" name="speed_unit" value="kph">KM/H</label>
+        <div class="spacer"></div>
+
+        <span class="modal-title">Distance units:</span>
+        <label><input type="radio" name="distance_unit" value="nm">Nautical miles</label>
+        <label><input type="radio" name="distance_unit" value="mi">Statute miles</label>
+        <label><input type="radio" name="distance_unit" value="km">Kilometers</label>
+        <div class="spacer"></div>
+
+        <span class="modal-title">Altitude units:</span>
+        <label><input type="radio" name="altitude_unit" value="ft">Feet</label>
+        <label><input type="radio" name="altitude_unit" value="m">Meters</label>
+        <div class="spacer"></div>
+
+        <div class="buttons">
+          <button class="close">Close</button>
+        </div>
+      </div>
+    </div>
+
     <script src="app.js"></script>
   </body>
 
