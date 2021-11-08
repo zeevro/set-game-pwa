@@ -26,9 +26,11 @@ const TABLE_SIZE = SET_SIZE * 4;
 
 const deckProgress = document.querySelector('#deckProgress');
 const deckProgressLabel = document.querySelector('#deckProgressLabel');
-const newGameBtn = document.querySelector('#newGameBtn');
 const container = document.querySelector('.container');
 const gameBoard = document.querySelector('.game-board');
+const newGameBtn = document.querySelector('#newGameBtn');
+const hintBtn = document.querySelector('#hintBtn');
+const add3Btn = document.querySelector('#add3Btn');
 
 function removeLegacy() {
   ['deck', 'table'].forEach(k => localStorage.removeItem(k));
@@ -68,8 +70,17 @@ function initModals() {
   });
 
   document.querySelector('#settingsBtn').addEventListener('click', () => {
+    document.querySelectorAll('#settingsModal input').forEach(elem => {
+      elem.checked = game.settings[elem.name] ^ parseInt(elem.dataset.invert);
+    });
     document.querySelector('#settingsModal').classList.add('active');
   });
+
+  document.querySelectorAll('#settingsModal input').forEach(elem => elem.addEventListener('click', e => {
+    game.settings[e.target.name] = (e.target.checked ^ parseInt(e.target.dataset.invert)) ? true : false;
+    localStorage.settings = JSON.stringify(game.settings);
+    game.renderTable();
+  }));
 }
 
 function toast(text, ttl=3000) {
@@ -249,6 +260,19 @@ class Game {
     this.table = new CardArray();
     this.sets = [];
     this.oldCards = {};
+
+    if (localStorage.settings !== undefined) {
+      this.settings = JSON.parse(localStorage.settings);
+    } else {
+      this.settings = {
+        autoDeal: true,
+        hints: false,
+      };
+    }
+  }
+
+  get gameFinished() {
+    return !this.deck.length && !this.sets.length;
   }
 
   loadState(str) {
@@ -293,9 +317,14 @@ class Game {
     return document.querySelector(`.card[data-card-value="${card.toByte()}"]`);
   }
 
+  foulFlash() {
+    container.classList.add('bad-set');
+    setTimeout(() => container.classList.remove('bad-set'), 800);
+  }
+
   deal() {
     this.sets = this.table.allSets();
-    while (this.deck.length && (this.table.length < TABLE_SIZE || !this.sets.length)) {
+    while (this.deck.length && (this.table.length < TABLE_SIZE || (!this.sets.length && this.settings.autoDeal))) {
       this.table.push(...this.deck.splice(-SET_SIZE));
       this.sets = this.table.allSets();
     }
@@ -323,8 +352,7 @@ class Game {
     if (cards.isSet()) {
       this.takeSet(cards);
     } else {
-      container.classList.add('bad-set');
-      setTimeout(() => container.classList.remove('bad-set'), 800);
+      this.foulFlash();
     }
   }
 
@@ -336,7 +364,9 @@ class Game {
     deckProgress.value = DECK_SIZE - this.deck.length;
     deckProgressLabel.innerHTML = `Cards in deck: ${this.deck.length}`;
 
-    newGameBtn.classList.toggle('hidden', this.sets.length);
+    hintBtn.classList.toggle('hidden', !this.settings.hints || this.gameFinished);
+    add3Btn.classList.toggle('hidden', this.settings.autoDeal || this.gameFinished);
+    newGameBtn.classList.toggle('hidden', !this.gameFinished);
 
     gameBoard.innerHTML = this.table.map((card, idx) => card.toHtml(this.oldCards[idx])).join('');
     this.oldCards = {};
@@ -363,13 +393,27 @@ class Game {
   }
 
   hint() {
-    if (!this.sets.length) return;
+    if (!this.sets.length) {
+      if (!this.settings.autoDeal) this.add3();
+      return;
+    }
     let hinted = CardArray.fromNodeList(document.querySelectorAll('.game-board .card.hinted'));
     if (hinted.length >= SET_SIZE) return;
     let availableSets = this.sets.filter(set => hinted.every(card => set.includes(card)));
     let hintedSet = availableSets.random();
     let cardToHint = hintedSet.filter(card => !hinted.includes(card)).random();
     this.getCardElement(cardToHint).classList.add('hinted');
+  }
+
+  add3() {
+    if (!this.deck.length) return;
+    if (this.table.length >= TABLE_SIZE && this.sets.length) {
+      this.foulFlash();
+      return;
+    }
+    this.table.push(...this.deck.splice(-SET_SIZE));
+    this.sets = game.table.allSets();
+    this.renderTable();
   }
 
   validateState(oldDeck, oldTable, takenSet) {
@@ -387,7 +431,10 @@ class Game {
   }
 
   step() {
-    if (!this.sets.length) return;
+    if (!this.sets.length) {
+      if (!this.settings.autoDeal) this.add3();
+      return;
+    }
     let oldDeck = this.deck.slice();
     let oldTable = this.table.slice();
     let takenSet = this.sets.random()
@@ -397,7 +444,7 @@ class Game {
   }
 
   async playTillEnd(moveDelay=50) {
-    while (this.sets.length) {
+    while (!this.gameFinished) {
       this.step();
       await sleep(moveDelay);
     }
@@ -418,13 +465,22 @@ initWakeLock();
 initModals();
 
 let game = new Game();
-game.startGame();
 
 window.addEventListener('hashchange', e => {
   console.log(e);
   game.startGame();
 });
 
+hintBtn.addEventListener('click', () => {
+  game.hint();
+});
+
+add3Btn.addEventListener('click', () => {
+  game.add3();
+});
+
 newGameBtn.addEventListener('click', () => {
   game.newGame();
 });
+
+game.startGame();

@@ -37,32 +37,22 @@
           <progress id="deckProgress" max="81" value="81"></progress>
           <div id="deckProgressLabel">Cards in deck: 81</div>
         </div>
-        <div id="settingsBtn" style="display: none">
+        <div id="settingsBtn">
           <img src="gear-2.svg" alt="Settings">
         </div>
       </div>
       <div class="game-board"></div>
-      <button id="newGameBtn" class="hidden">NEW GAME</button>
+      <div class="game-buttons-container">
+        <button id="hintBtn" class="game-button hidden">HINT</button>
+        <button id="add3Btn" class="game-button hidden">ADD 3</button>
+        <button id="newGameBtn" class="game-button hidden">NEW GAME</button>
+      </div>
     </div>
 
     <div id="settingsModal" class="modal">
       <div class="modal-content">
-        <span class="modal-title">Colors:</span>
-        <label><input type="radio" name="speed_unit" value="kts">Knots</label>
-        <label><input type="radio" name="speed_unit" value="mph">MPH</label>
-        <label><input type="radio" name="speed_unit" value="kph">KM/H</label>
-        <div class="spacer"></div>
-
-        <span class="modal-title">Distance units:</span>
-        <label><input type="radio" name="distance_unit" value="nm">Nautical miles</label>
-        <label><input type="radio" name="distance_unit" value="mi">Statute miles</label>
-        <label><input type="radio" name="distance_unit" value="km">Kilometers</label>
-        <div class="spacer"></div>
-
-        <span class="modal-title">Altitude units:</span>
-        <label><input type="radio" name="altitude_unit" value="ft">Feet</label>
-        <label><input type="radio" name="altitude_unit" value="m">Meters</label>
-        <div class="spacer"></div>
+        <label><input type="checkbox" name="autoDeal">Auto deal new cards</label>
+        <label><input type="checkbox" name="hints">Enable hint button</label>
 
         <div class="buttons">
           <button class="close">Close</button>
