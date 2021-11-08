@@ -4,6 +4,22 @@ window.addEventListener("load", () => {
   }
 });
 
+Array.prototype.random = function() {
+  return this[Math.floor(Math.random() * this.length)];
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function* zip(...arrs) {
+  for (let i = 0;; i++) {
+    let z = arrs.map(arr => arr[i]);
+    if (z.some(x => x === undefined)) break;
+    yield z;
+  }
+}
+
 const SET_SIZE = 3;
 const DECK_SIZE = SET_SIZE ** 4;
 const TABLE_SIZE = SET_SIZE * 4;
@@ -38,61 +54,22 @@ function initWakeLock() {
   }
 }
 
-function range(a, b) {
-  if (b === undefined) {
-    return Array.from(new Array(a).keys());
-  }
-  return Array.from(new Array(b).keys()).splice(a);
-}
+function initModals() {
+  document.querySelectorAll('.modal .close').forEach(elem => {
+    elem.addEventListener('click', e => {
+      e.target.closest('.modal').classList.remove('active');
+    })
+  });
 
-function buildDeck() {
-  let deck = [];
-  for (let number of [1, 2, 3]) {
-    for (let fill of ['solid', 'striped', 'blank']) {
-      for (let color of ['red', 'purple', 'green']) {
-        for (let shape of ['diamond', 'squiggle', 'oval']) {
-          let card = new Card(number, fill, color, shape);
-          deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, card);
-        }
-      }
-    }
-  }
-  return deck;
-}
+  document.querySelectorAll('.modal').forEach(elem => {
+    elem.addEventListener('click', e => {
+      if (e.target == elem) elem.classList.remove('active');
+    });
+  });
 
-function validateSet(cards) {
-  return Object.keys(cards[0]).every(k => [1, cards.length].includes(new Set(cards.map(c => c[k])).size));
-}
-
-function combinations(arr, size) {
-  if (size <= 0 || size > arr.length) {
-    return [];
-  }
-
-  if (size == 1) {
-    return arr.map(n => [n]);
-  }
-
-  return [...arr.slice(0, arr.length - size + 1).flatMap((n, i) => combinations(arr.slice(i + 1), size - 1).map(rest => [n].concat(rest)))];
-}
-
-function findSets(cards) {
-  return combinations(cards, SET_SIZE).filter(validateSet).map(set => CardArray.from(set));
-}
-
-function dumpState(deck, table) {
-  return [deck, table].map(cards => btoa(String.fromCharCode(...cards.map(card => card.toByte())))).join('_');
-}
-
-function loadState(str) {
-  let state = str.split('_').map(part => new CardArray(...atob(part)).map(c => Card.fromByte(c.charCodeAt(0))));
-  if (state.length != 2) {
-    throw 'Invalid state code';
-  }
-  if (state.some(cards => cards.length % SET_SIZE != 0)) {
-    throw 'Invalid card count';
-  }
-  return state;
+  document.querySelector('#settingsBtn').addEventListener('click', () => {
+    document.querySelector('#settingsModal').classList.add('active');
+  });
 }
 
 function toast(text, ttl=3000) {
@@ -164,7 +141,7 @@ class Card {
     return card;
   }
 
-  toHtml(idx, oldCard) {
+  toHtml(oldCard) {
     const paths = {
       diamond: "M25 0 L50 50 L25 100 L0 50 Z",
       squiggle: "M38.4,63.4c0,16.1,11,19.9,10.6,28.3c-0.5,9.2-21.1,12.2-33.4,3.8s-15.8-21.2-9.3-38c3.7-7.5,4.9-14,4.8-20 c0-16.1-11-19.9-10.6-28.3C1,0.1,21.6-3,33.9,5.5s15.8,21.2,9.3,38C40.4,50.6,38.5,57.4,38.4,63.4z",
@@ -177,11 +154,11 @@ class Card {
         case 'solid': return `var(--${this.color})`;
       }
     }
-    let svg = () => `<svg viewbox="-6 -6 62 112"><path d="${paths[this.shape]}" fill="${fillStr()}" /></svg>`;
+    let svg = `<svg viewbox="-6 -6 62 112"><path d="${paths[this.shape]}" fill="${fillStr()}" /></svg>`;
 
-    return `<div class="card ${this.color}${oldCard !== undefined ? ' new' : ''}"${idx !== undefined ? (' data-idx="' + idx + '" ') : ''}">
+    return `<div class="card ${this.color}${oldCard !== undefined ? ' new' : ''}" data-card-value="${this.toByte()}">
       <div class="card-content">
-        ${range(this.number).map(svg).join('')}
+        ${svg.repeat(this.number)}
       </div>
     </div>`;
   }
@@ -197,6 +174,49 @@ class Card {
 }
 
 class CardArray extends Array {
+  static randomDeck() {
+    let deck = new this();
+    for (let number of [1, 2, 3]) {
+      for (let fill of ['solid', 'striped', 'blank']) {
+        for (let color of ['red', 'purple', 'green']) {
+          for (let shape of ['diamond', 'squiggle', 'oval']) {
+            let card = new Card(number, fill, color, shape);
+            deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, card);
+          }
+        }
+      }
+    }
+    return deck;
+  }
+
+  static fromNodeList(nodes) {
+    return this.from(nodes).map(elem => Card.fromByte(elem.dataset.cardValue))
+  }
+
+  combinations(size) {
+    if (size <= 0 || size > this.length) {
+      return new this.constructor();
+    }
+
+    if (size == 1) {
+      return this.map(n => this.constructor.of(n));
+    }
+
+    return this.slice(0, this.length - size + 1).flatMap((n, i) => this.slice(i + 1).combinations(size - 1).map(rest => this.constructor.of(n).concat(rest)));
+  }
+
+  allSets() {
+    return this.combinations(SET_SIZE).filter(arr => arr.isSet());
+  }
+
+  containsSet() {
+    return this.allSets().length > 0;
+  }
+
+  isSet() {
+    return Object.keys(this[0]).every(param => [1, this.length].includes(new Set(this.map(card => card[param])).size));
+  }
+
   indexOf(card) {
     for (let i = 0; i < this.length; i++) {
       if (this[i].equals(card)) {
@@ -206,20 +226,20 @@ class CardArray extends Array {
     return -1;
   }
 
+  includes(card) {
+    return this.indexOf(card) != -1
+  }
+
   toString() {
     return this.map(card => card.toString()).join(' ');
   }
 
-  getSets() {
-    return findSets(this);
+  pluck(...cards) {
+    return Array.from(cards.map(card => this.indexOf(card)));
   }
 
-  containsSet() {
-    return this.getSets().length > 0;
-  }
-
-  isSet() {
-    return validateSet(this);
+  without(...indices) {
+    return this.filter((card, idx) => !indices.includes(idx));
   }
 }
 
@@ -231,10 +251,25 @@ class Game {
     this.oldCards = {};
   }
 
+  loadState(str) {
+    let state = str.split('_').map(part => new CardArray(...atob(part)).map(c => Card.fromByte(c.charCodeAt(0))));
+    if (state.length != 2) {
+      throw 'Invalid state code';
+    }
+    if (state.some(cards => cards.length % SET_SIZE != 0)) {
+      throw 'Invalid card count';
+    }
+    [this.deck, this.table] = state;
+  }
+
+  dumpState() {
+    return [this.deck, this.table].map(cards => btoa(String.fromCharCode(...cards.map(card => card.toByte())))).join('_');
+  }
+
   initGameState() {
     if (location.hash && location.hash.substr(1) != localStorage.state) {
       try {
-        [this.deck, this.table] = loadState(location.hash.substr(1));
+        this.loadState(location.hash.substr(1));
         return;
       } catch (err) {
         console.log(err);
@@ -244,32 +279,37 @@ class Game {
 
     if (localStorage.state !== undefined) {
       try {
-        [this.deck, this.table] = loadState(localStorage.state);
+        this.loadState(localStorage.state);
         return;
       } catch (err) {
         console.log(err);
       }
     }
 
-    this.deck = buildDeck();
+    this.deck = CardArray.randomDeck();
+  }
+
+  getCardElement(card) {
+    return document.querySelector(`.card[data-card-value="${card.toByte()}"]`);
   }
 
   deal() {
-    this.sets = findSets(this.table);
+    this.sets = this.table.allSets();
     while (this.deck.length && (this.table.length < TABLE_SIZE || !this.sets.length)) {
       this.table.push(...this.deck.splice(-SET_SIZE));
-      this.sets = findSets(this.table);
+      this.sets = this.table.allSets();
     }
     this.renderTable();
   }
 
-  takeSet(indices) {
-    this.sets = findSets(this.table.filter((card, idx) => !indices.includes(idx)));
+  takeSet(cards) {
+    let indices = this.table.pluck(...cards);
+    this.sets = this.table.without(...indices).allSets();
     if (this.deck.length && (this.table.length <= TABLE_SIZE || !this.sets.length)) {
-      this.oldCards = Object.fromEntries(indices.map(idx => [idx, this.table[idx]]));
+      this.oldCards = Object.fromEntries(zip(indices, cards));
       indices.forEach(idx => this.table.splice(idx, 1, this.deck.pop()));
     } else {
-      indices.forEach(idx => this.table.splice(idx, 1));
+      this.table = this.table.without(...indices);
     }
     this.deal();
   }
@@ -278,10 +318,10 @@ class Game {
     e.target.closest('.card').classList.toggle('selected');
     let selected = document.querySelectorAll('.game-board .card.selected');
     if (selected.length < SET_SIZE) return;
+    let cards = CardArray.fromNodeList(selected);
     selected.forEach(elem => elem.classList.remove('selected'));
-    let indices = Array.from(selected).map(elem => parseInt(elem.dataset.idx));
-    if (CardArray.from(indices.map(idx => this.table[idx])).isSet()) {
-      this.takeSet(indices);
+    if (cards.isSet()) {
+      this.takeSet(cards);
     } else {
       container.classList.add('bad-set');
       setTimeout(() => container.classList.remove('bad-set'), 800);
@@ -289,16 +329,16 @@ class Game {
   }
 
   renderTable() {
-    let state = dumpState(this.deck, this.table);
+    let state = this.dumpState();
     localStorage.state = state;
-    history.replaceState(null, null, '#' + state);
+    // history.replaceState(null, null, '#' + state);
 
     deckProgress.value = DECK_SIZE - this.deck.length;
     deckProgressLabel.innerHTML = `Cards in deck: ${this.deck.length}`;
 
     newGameBtn.classList.toggle('hidden', this.sets.length);
 
-    gameBoard.innerHTML = this.table.map((card, idx) => card.toHtml(idx, this.oldCards[idx])).join('');
+    gameBoard.innerHTML = this.table.map((card, idx) => card.toHtml(this.oldCards[idx])).join('');
     this.oldCards = {};
 
     this.table.forEach(card => { delete card.new; });
@@ -315,26 +355,48 @@ class Game {
     this.initGameState();
     this.deal();
   }
+
+  newGame() {
+    this.deck = CardArray.randomDeck();
+    this.table = new CardArray();
+    this.deal();
+  }
+
+  hint() {
+    if (!this.sets.length) return;
+    let hinted = CardArray.fromNodeList(document.querySelectorAll('.game-board .card.hinted'));
+    if (hinted.length >= SET_SIZE) return;
+    let availableSets = this.sets.filter(set => hinted.every(card => set.includes(card)));
+    let hintedSet = availableSets.random();
+    let cardToHint = hintedSet.filter(card => !hinted.includes(card)).random();
+    this.getCardElement(cardToHint).classList.add('hinted');
+  }
+
+  step() {
+    if (!this.sets.length) return;
+    this.takeSet(this.sets.random());
+  }
+
+  async playTillEnd(moveDelay=50) {
+    while (this.sets.length) {
+      this.step();
+      await sleep(moveDelay);
+    }
+  }
+
+  async playForever(moveDelay=50) {
+    let stop = false;
+    this.stop = () => { stop = true; };
+    while (!stop) {
+      await this.playTillEnd(moveDelay);
+      this.newGame();
+    }
+  }
 }
-
-document.querySelectorAll('.modal .close').forEach(elem => {
-  elem.addEventListener('click', e => {
-    e.target.closest('.modal').classList.remove('active');
-  })
-});
-
-document.querySelectorAll('.modal').forEach(elem => {
-  elem.addEventListener('click', e => {
-    if (e.target == elem) elem.classList.remove('active');
-  });
-});
-
-document.getElementById('settingsBtn').addEventListener('click', () => {
-  document.getElementById('settingsModal').classList.add('active');
-});
 
 removeLegacy();
 initWakeLock();
+initModals();
 
 let game = new Game();
 game.startGame();
@@ -342,4 +404,8 @@ game.startGame();
 window.addEventListener('hashchange', e => {
   console.log(e);
   game.startGame();
+});
+
+newGameBtn.addEventListener('click', () => {
+  game.newGame();
 });

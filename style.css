@@ -7,6 +7,7 @@
   --shadow-color: rgba(255, 255, 255, 0.5);
   --selected-displacement-x: 4px;
   --selected-displacement-y: 7px;
+  --hint-color: yellow;
 }
 
 html, body {
@@ -116,9 +117,18 @@ html, body {
 
 .card.selected {
   box-shadow: var(--selected-displacement-x) var(--selected-displacement-y) var(--shadow-color);
-  position: relative;
   left: calc(var(--selected-displacement-x) * -1);
   top: calc(var(--selected-displacement-y) * -1);
+}
+
+.card.hinted {
+  box-shadow: -5px -5px 5px var(--hint-color), 5px -5px 5px var(--hint-color), -5px 5px 5px var(--hint-color), 5px 5px 5px var(--hint-color);
+  /* transition: box-shadow 0.4s ease; */
+}
+
+.card.selected.hinted {
+  box-shadow: var(--selected-displacement-x) var(--selected-displacement-y) var(--shadow-color), -5px -5px 5px var(--hint-color);
+  /* transition: none; */
 }
 
 .card path {
