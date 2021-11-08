@@ -127,7 +127,7 @@ html, body {
 }
 
 .card.selected.hinted {
-  box-shadow: var(--selected-displacement-x) var(--selected-displacement-y) var(--shadow-color), -5px -5px 5px var(--hint-color);
+  box-shadow: var(--selected-displacement-x) var(--selected-displacement-y) 5px 2px var(--hint-color);
   /* transition: none; */
 }
 
