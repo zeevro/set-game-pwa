@@ -331,7 +331,7 @@ class Game {
   renderTable() {
     let state = this.dumpState();
     localStorage.state = state;
-    // history.replaceState(null, null, '#' + state);
+    history.replaceState(null, null, '#' + state);
 
     deckProgress.value = DECK_SIZE - this.deck.length;
     deckProgressLabel.innerHTML = `Cards in deck: ${this.deck.length}`;
@@ -372,9 +372,28 @@ class Game {
     this.getCardElement(cardToHint).classList.add('hinted');
   }
 
+  validateState(oldDeck, oldTable, takenSet) {
+    let errors = []
+    if (this.deck.length % SET_SIZE != 0) errors.push(`Bad deck length: ${this.deck.length}`);
+    if (this.table.length % SET_SIZE != 0) errors.push(`Bad table length: ${this.table.length}`);
+    if (this.deck.length && this.table.length < TABLE_SIZE) errors.push(`Table too small: ${this.table.length}`);
+    if (this.deck.length && !this.sets) errors.push('No sets on table');
+    if (oldTable.length <= this.table.length) {
+      oldTable.pluck(...takenSet).forEach(idx => {
+        if (!this.getCardElement(this.table[idx]).classList.contains('new')) errors.push(`Card was not marked new: ${idx}`);
+      });
+    }
+    return errors;
+  }
+
   step() {
     if (!this.sets.length) return;
-    this.takeSet(this.sets.random());
+    let oldDeck = this.deck.slice();
+    let oldTable = this.table.slice();
+    let takenSet = this.sets.random()
+    this.takeSet(takenSet);
+    let errors = this.validateState(oldDeck, oldTable, takenSet);
+    errors.forEach(err => console.error(err));
   }
 
   async playTillEnd(moveDelay=50) {
