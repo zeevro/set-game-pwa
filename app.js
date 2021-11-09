@@ -39,6 +39,7 @@ const hintBtn = document.querySelector('#hintBtn');
 const add3Btn = document.querySelector('#add3Btn');
 const qrCodeContainer = document.querySelector('#qrcode');
 const shareStateCheckbox = document.querySelector('input[name="shareState"]');
+const fullscreenBtn = document.querySelector('#fullscreenBtn');
 
 function removeLegacy() {
   ['deck', 'table'].forEach(k => localStorage.removeItem(k));
@@ -62,6 +63,20 @@ function initWakeLock() {
 
     requestWakeLock();
   }
+}
+
+function initFullScreen() {
+  if (matchMedia('(display-mode: standalone)').matches || navigator.standalone || document.referrer.includes('android-app://')) return;
+
+  fullscreenBtn.classList.remove('hidden');
+
+  fullscreenBtn.addEventListener('click', () => {
+    document.body.requestFullscreen();
+  });
+
+  document.addEventListener('fullscreenchange', () => {
+    fullscreenBtn.classList.toggle('hidden', document.fullscreenElement);
+  });
 }
 
 function getShareUrl() {
@@ -558,6 +573,7 @@ class Game {
 
 removeLegacy();
 initWakeLock();
+initFullScreen();
 initModals();
 initGameButtons();
 

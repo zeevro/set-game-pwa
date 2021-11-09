@@ -251,7 +251,7 @@ html, body {
 }
 
 .defaultColorBtn::before {
-  content: 'Default';
+  content: "Default";
 }
 
 #qrcode {
@@ -259,6 +259,18 @@ html, body {
   height: 80vmin;
   max-width: 10cm;
   max-height: 10cm;
+}
+
+#fullscreenBtn {
+  position: fixed;
+  right: 15px;
+  bottom: 15px;
+  width: 80px;
+  height: 80px;
+  color: white;
+  opacity: 0.5;
+  border-radius: 10px;
+  background: content-box url('fullscreen.svg') center/80% no-repeat, black;
 }
 
 @keyframes bad-set {
