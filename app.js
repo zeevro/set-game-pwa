@@ -39,6 +39,8 @@ const hintBtn = document.querySelector('#hintBtn');
 const add3Btn = document.querySelector('#add3Btn');
 const qrCodeContainer = document.querySelector('#qrcode');
 const shareStateCheckbox = document.querySelector('input[name="shareState"]');
+const installBtn = document.querySelector('#installBtn');
+const settingsBtn = document.querySelector('#settingsBtn');
 const fullscreenBtn = document.querySelector('#fullscreenBtn');
 
 function removeLegacy() {
@@ -65,17 +67,37 @@ function initWakeLock() {
   }
 }
 
-function initFullScreen() {
+function initPwaFeatures() {
   if (matchMedia('(display-mode: standalone)').matches || navigator.standalone || document.referrer.includes('android-app://')) return;
+  // if (!(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))) return;
 
-  fullscreenBtn.classList.remove('hidden');
+  const fullscreenBtnVisibility = () => {
+    const containerBoundingRect = container.getBoundingClientRect();
+    fullscreenBtn.classList.toggle('hidden', (
+      containerBoundingRect.top >= 0 &&
+      containerBoundingRect.bottom <= window.innerHeight + 1.5
+    ));
+  }
 
-  fullscreenBtn.addEventListener('click', () => {
-    document.body.requestFullscreen();
-  });
+  fullscreenBtn.addEventListener('click', () => { document.body.requestFullscreen(); });
+  window.addEventListener('resize', fullscreenBtnVisibility);
+  fullscreenBtnVisibility();
 
-  document.addEventListener('fullscreenchange', () => {
-    fullscreenBtn.classList.toggle('hidden', document.fullscreenElement);
+  window.addEventListener('beforeinstallprompt', deferedInstallEvent => {
+    installBtn.addEventListener('click', async () => {
+      if (deferedInstallEvent == null) return;
+      deferedInstallEvent.prompt();
+      let { outcome } = await deferedInstallEvent.userChoice;
+      if (outcome == 'accepted') {
+        installBtn.classList.add('hidden');
+        window.removeEventListener('resize', fullscreenBtnVisibility);
+      }
+    });
+
+    settingsBtn.addEventListener('click', () => { settingsBtn.classList.remove('glowing'); });
+
+    installBtn.classList.remove('hidden');
+    settingsBtn.classList.add('glowing');
   });
 }
 
@@ -575,7 +597,7 @@ class Game {
 
 removeLegacy();
 initWakeLock();
-initFullScreen();
+initPwaFeatures();
 initModals();
 initGameButtons();
 

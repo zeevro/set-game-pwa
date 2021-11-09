@@ -273,6 +273,14 @@ html, body {
   background: content-box url('fullscreen.svg') center/80% no-repeat, black;
 }
 
+#installBtn {
+  animation: glow 1.5s infinite;
+}
+
+#settingsBtn.glowing > img {
+  content: url("gear-2-glowing.svg");
+}
+
 @keyframes bad-set {
   0% {
     background-color: darkred;
