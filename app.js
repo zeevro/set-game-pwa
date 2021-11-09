@@ -357,11 +357,11 @@ class CardArray extends Array {
     return this.map(card => card.toString()).join(' ');
   }
 
-  pluck(...cards) {
+  pluck(cards) {
     return Array.from(cards.map(card => this.indexOf(card)));
   }
 
-  without(...indices) {
+  without(indices) {
     return this.filter((card, idx) => !indices.includes(idx));
   }
 }
@@ -445,13 +445,13 @@ class Game {
   }
 
   takeSet(cards) {
-    let indices = this.table.pluck(...cards);
-    this.sets = this.table.without(...indices).allSets();
+    let indices = this.table.pluck(cards);
+    this.sets = this.table.without(indices).allSets();
     if (this.deck.length && (this.table.length <= TABLE_SIZE || !this.sets.length)) {
       this.oldCards = Object.fromEntries(zip(indices, cards));
       indices.forEach(idx => this.table.splice(idx, 1, this.deck.pop()));
     } else {
-      this.table = this.table.without(...indices);
+      this.table = this.table.without(indices);
     }
     this.deal();
   }
@@ -534,9 +534,10 @@ class Game {
     if (this.deck.length && this.table.length < TABLE_SIZE) errors.push(`Table too small: ${this.table.length}`);
     if (this.deck.length && !this.sets) errors.push('No sets on table');
     if (oldTable.length <= this.table.length) {
-      oldTable.pluck(...takenSet).forEach(idx => {
+      oldTable.pluck(takenSet).forEach(idx => {
         if (!this.getCardElement(this.table[idx]).classList.contains('new')) errors.push(`Card was not marked new: ${idx}`);
       });
+      if (this.table.length > TABLE_SIZE && oldTable.without(oldTable.pluck(takenSet)).containsSet()) errors.push('Redundant cards on table');
     }
     return errors;
   }
@@ -552,6 +553,7 @@ class Game {
     this.takeSet(takenSet);
     let errors = this.validateState(oldDeck, oldTable, takenSet);
     errors.forEach(err => console.error(err));
+    if (this.table.length > TABLE_SIZE) console.log(`${this.table.length / SET_SIZE} rows on table`);
   }
 
   async playTillEnd(moveDelay=50) {
