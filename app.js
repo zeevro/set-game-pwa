@@ -136,6 +136,10 @@ function initModals() {
     game.renderTable();
   }));
 
+  document.querySelector('#settingsNewGameBtn').addEventListener('click', () => {
+    game.newGame();
+  });
+
   document.querySelector('#shareBtn').addEventListener('click', () => {
     populateShareModal();
     document.querySelector('#shareModal').classList.add('active');
@@ -160,6 +164,20 @@ function initModals() {
   } else {
     document.querySelector('#shareGameBtn').classList.add('hidden');
   }
+}
+
+function initGameButtons() {
+  hintBtn.addEventListener('click', () => {
+    game.hint();
+  });
+
+  add3Btn.addEventListener('click', () => {
+    game.add3();
+  });
+
+  newGameBtn.addEventListener('click', () => {
+    game.newGame();
+  });
 }
 
 function toast(text, ttl=3000) {
@@ -541,6 +559,7 @@ class Game {
 removeLegacy();
 initWakeLock();
 initModals();
+initGameButtons();
 
 let game = new Game();
 
@@ -551,18 +570,6 @@ if (localStorage.colors !== undefined) {
 window.addEventListener('hashchange', e => {
   console.log(e);
   game.startGame();
-});
-
-hintBtn.addEventListener('click', () => {
-  game.hint();
-});
-
-add3Btn.addEventListener('click', () => {
-  game.add3();
-});
-
-newGameBtn.addEventListener('click', () => {
-  game.newGame();
 });
 
 game.startGame();
