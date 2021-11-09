@@ -14,6 +14,8 @@
     <link rel="icon" href="icons/icon-72.png" sizes="72x72">
     <link rel="icon" href="icons/icon-96.png" sizes="96x96">
     <link rel="icon" href="icons/icon-512.png" sizes="512x512">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   </head>
 
   <body>
@@ -37,8 +39,11 @@
           <progress id="deckProgress" max="81" value="81"></progress>
           <div id="deckProgressLabel">Cards in deck: 81</div>
         </div>
-        <div id="settingsBtn">
+        <div class="top-btn" id="settingsBtn">
           <img src="gear-2.svg" alt="Settings">
+        </div>
+        <div class="top-btn" id="shareBtn">
+          <img src="share.svg" alt="Share">
         </div>
       </div>
       <div class="game-board"></div>
@@ -70,6 +75,19 @@
           <input type="color" name="green">
           <button class="defaultColorBtn" data-color="green"></button>
         </div>
+
+        <div class="buttons">
+          <button class="close">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="shareModal" class="modal">
+      <div class="modal-content">
+        <label><input type="checkbox" name="shareState" checked>Share this game</label>
+        <img id="qrcode">
+        <button id="copyUrlBtn">Copy URL</button>
+        <button id="shareGameBtn">Share</button>
 
         <div class="buttons">
           <button class="close">Close</button>

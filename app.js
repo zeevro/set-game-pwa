@@ -37,6 +37,8 @@ const gameBoard = document.querySelector('.game-board');
 const newGameBtn = document.querySelector('#newGameBtn');
 const hintBtn = document.querySelector('#hintBtn');
 const add3Btn = document.querySelector('#add3Btn');
+const qrCodeContainer = document.querySelector('#qrcode');
+const shareStateCheckbox = document.querySelector('input[name="shareState"]');
 
 function removeLegacy() {
   ['deck', 'table'].forEach(k => localStorage.removeItem(k));
@@ -62,7 +64,23 @@ function initWakeLock() {
   }
 }
 
-function initSettingsModal() {
+function getShareUrl() {
+  let url = location.href.split('#')[0];
+  if (shareStateCheckbox.checked) {
+    url += '#' + game.dumpState();
+  }
+  return url;
+}
+
+function populateShareModal() {
+  let qr = new QRious({
+    element: qrCodeContainer,
+    value: getShareUrl(),
+    size: qrCodeContainer.width,
+  });
+}
+
+function initModals() {
   document.querySelectorAll('.modal .close').forEach(elem => {
     elem.addEventListener('click', e => {
       e.target.closest('.modal').classList.remove('active');
@@ -117,6 +135,31 @@ function initSettingsModal() {
     localStorage.colors = JSON.stringify(colorSettings);
     game.renderTable();
   }));
+
+  document.querySelector('#shareBtn').addEventListener('click', () => {
+    populateShareModal();
+    document.querySelector('#shareModal').classList.add('active');
+  });
+
+  shareStateCheckbox.addEventListener('click', () => {
+    populateShareModal();
+  });
+
+  document.querySelector('#copyUrlBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(getShareUrl());
+    toast('URL copied');
+  });
+
+  if ('share' in navigator) {
+    document.querySelector('#shareGameBtn').addEventListener('click', () => {
+      navigator.share({
+        title: 'Set Game',
+        url: getShareUrl(),
+      });
+    });
+  } else {
+    document.querySelector('#shareGameBtn').classList.add('hidden');
+  }
 }
 
 function toast(text, ttl=3000) {
@@ -327,9 +370,10 @@ class Game {
   }
 
   initGameState() {
-    if (location.hash && location.hash.substr(1) != localStorage.state) {
+    if (location.hash) {
       try {
         this.loadState(location.hash.substr(1));
+        history.replaceState(null, null, location.href.split('#')[0]);
         return;
       } catch (err) {
         console.log(err);
@@ -393,9 +437,7 @@ class Game {
   }
 
   renderTable() {
-    let state = this.dumpState();
-    localStorage.state = state;
-    history.replaceState(null, null, '#' + state);
+    localStorage.state = this.dumpState();
 
     deckProgress.value = DECK_SIZE - this.deck.length;
     deckProgressLabel.innerHTML = `Cards in deck: ${this.deck.length}`;
@@ -498,7 +540,7 @@ class Game {
 
 removeLegacy();
 initWakeLock();
-initSettingsModal();
+initModals();
 
 let game = new Game();
 

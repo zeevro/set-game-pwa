@@ -56,16 +56,16 @@ html, body {
   position: absolute;
   top: calc(25px - 0.6em);
   left: 0;
-  right: 50px;
+  right: 100px;
   color: black;
   text-shadow: -1px -1px 1px lightblue, 1px -1px 1px lightblue, -1px 1px 1px lightblue, 1px 1px 1px lightblue;
 }
 
-#settingsBtn {
+.top-btn {
   padding: 5px;
 }
 
-#settingsBtn img {
+.top-btn img {
   height: 100%;
 }
 
@@ -245,8 +245,20 @@ html, body {
   font-size: x-large;
 }
 
+#shareModal > .modal-content > button {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
 .defaultColorBtn::before {
   content: 'Default';
+}
+
+#qrcode {
+  width: 80vmin;
+  height: 80vmin;
+  max-width: 10cm;
+  max-height: 10cm;
 }
 
 @keyframes bad-set {
