@@ -20,6 +20,12 @@ function* zip(...arrs) {
   }
 }
 
+function colorValue(str){
+  var ctx = document.createElement("canvas").getContext("2d");
+  ctx.fillStyle = str;
+  return ctx.fillStyle;
+}
+
 const SET_SIZE = 3;
 const DECK_SIZE = SET_SIZE ** 4;
 const TABLE_SIZE = SET_SIZE * 4;
@@ -56,7 +62,7 @@ function initWakeLock() {
   }
 }
 
-function initModals() {
+function initSettingsModal() {
   document.querySelectorAll('.modal .close').forEach(elem => {
     elem.addEventListener('click', e => {
       e.target.closest('.modal').classList.remove('active');
@@ -70,15 +76,45 @@ function initModals() {
   });
 
   document.querySelector('#settingsBtn').addEventListener('click', () => {
-    document.querySelectorAll('#settingsModal input').forEach(elem => {
+    document.querySelectorAll('#settingsModal input[type="checkbox"]').forEach(elem => {
       elem.checked = game.settings[elem.name] ^ parseInt(elem.dataset.invert);
+    });
+    document.querySelectorAll('#settingsModal input[type="color"]').forEach(elem => {
+      elem.value = colorValue(getComputedStyle(document.documentElement).getPropertyValue(`--${elem.name}`));
     });
     document.querySelector('#settingsModal').classList.add('active');
   });
 
-  document.querySelectorAll('#settingsModal input').forEach(elem => elem.addEventListener('click', e => {
+  document.querySelector('#defaultColorsBtn').addEventListener('click', () => {
+    document.querySelectorAll('#settingsModal input[type="color"]').forEach(elem => {
+      let propertyName = `--${elem.name}`;
+      document.documentElement.style.removeProperty(propertyName);
+      elem.value = colorValue(getComputedStyle(document.documentElement).getPropertyValue(propertyName));
+    });
+    localStorage.removeItem('colors');
+  });
+
+  document.querySelectorAll('.defaultColorBtn').forEach(elem => elem.addEventListener('click', e => {
+    let colorName = e.target.dataset.color;
+    let propertyName = `--${colorName}`;
+    document.documentElement.style.removeProperty(propertyName);
+    document.querySelector(`#settingsModal input[type="color"][name="${colorName}"]`).value = colorValue(getComputedStyle(document.documentElement).getPropertyValue(propertyName));
+    if (localStorage.colors !== undefined) {
+      localStorage.colors = JSON.stringify(Object.fromEntries(Object.entries(JSON.parse(localStorage.colors)).filter(([color, value]) => color != colorName)));
+    }
+  }));
+
+  document.querySelectorAll('#settingsModal input[type="checkbox"]').forEach(elem => elem.addEventListener('click', e => {
     game.settings[e.target.name] = (e.target.checked ^ parseInt(e.target.dataset.invert)) ? true : false;
     localStorage.settings = JSON.stringify(game.settings);
+    game.renderTable();
+  }));
+
+  document.querySelectorAll('#settingsModal input[type="color"]').forEach(elem => elem.addEventListener('input', e => {
+    document.documentElement.style.setProperty(`--${e.target.name}`, e.target.value);
+    let colorSettings = localStorage.colors !== undefined ? JSON.parse(localStorage.colors) : {};
+    colorSettings[e.target.name] = e.target.value;
+    localStorage.colors = JSON.stringify(colorSettings);
     game.renderTable();
   }));
 }
@@ -462,9 +498,13 @@ class Game {
 
 removeLegacy();
 initWakeLock();
-initModals();
+initSettingsModal();
 
 let game = new Game();
+
+if (localStorage.colors !== undefined) {
+  Object.entries(JSON.parse(localStorage.colors)).forEach(([color, value]) => document.documentElement.style.setProperty(`--${color}`, value));
+}
 
 window.addEventListener('hashchange', e => {
   console.log(e);
