@@ -214,17 +214,39 @@ html, body {
   padding: 10px;
   vertical-align: middle;
   transform: translateY(-50%);
+  border-radius: 10px;
 }
 
-.modal-title {
-  text-decoration: underline;
+.modal > .modal-content button {
+  font-size: x-large;
 }
 
-.modal .buttons * {
+.modal > .modal-content > .row {
+  display: flex;
+  align-items: center;
+}
+
+.modal > .modal-content > .row > button {
+  font-size: large;
+}
+
+.modal > .modal-content > .row > * {
+  margin-right: 10px;
+}
+
+.modal > .modal-content > .row > *:last-child {
+  margin-right: 0;
+}
+
+.modal > .modal-content > .buttons > * {
   float: right;
   margin-left: 0.2em;
   margin-top: 0.2em;
   font-size: x-large;
+}
+
+.defaultColorBtn::before {
+  content: 'Default';
 }
 
 @keyframes bad-set {
