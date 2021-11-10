@@ -159,7 +159,7 @@ function initModals() {
     }
   }));
 
-  document.querySelectorAll('#settingsModal input[type="checkbox"]').forEach(elem => elem.addEventListener('click', e => {
+  document.querySelectorAll('#settingsModal input[type="checkbox"]').forEach(elem => elem.addEventListener('input', e => {
     game.settings[e.target.name] = (e.target.checked ^ parseInt(e.target.dataset.invert)) ? true : false;
     localStorage.settings = JSON.stringify(game.settings);
     game.renderTable();
@@ -182,7 +182,7 @@ function initModals() {
     document.querySelector('#shareModal').classList.add('active');
   });
 
-  shareStateCheckbox.addEventListener('click', () => {
+  shareStateCheckbox.addEventListener('input', () => {
     populateShareModal();
   });
 
@@ -192,14 +192,41 @@ function initModals() {
   });
 
   if ('share' in navigator) {
-    document.querySelector('#shareGameBtn').addEventListener('click', () => {
-      navigator.share({
+    const doShare = async (withImage = false) => {
+      let shareData = {
         title: 'Set Game',
         url: getShareUrl(),
-      });
-    });
+      };
+
+      if (shareStateCheckbox.checked && withImage) {
+        let canvas = await html2canvas(document.querySelector('.game-board'), { backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--board-color') })
+        let blob = await new Promise(resolve => canvas.toBlob(resolve));
+        shareData.files = [
+          new File(
+            [blob],
+            'set-board.png',
+            {
+              type: blob.type,
+              lastModified: new Date().getTime(),
+            }
+          )
+        ];
+      }
+
+      if (navigator.canShare(shareData)) {
+        navigator.share(shareData);
+      } else {
+        toast('Problem with sharing');
+      }
+    };
+
+    shareStateCheckbox.addEventListener('input', e => { document.querySelector('#shareGameWithScreenshotBtn').classList.toggle('hidden', !e.target.checked); });
+
+    document.querySelector('#shareGameBtn').addEventListener('click', async () => doShare());
+    document.querySelector('#shareGameWithScreenshotBtn').addEventListener('click', async () => doShare(true));
   } else {
     document.querySelector('#shareGameBtn').classList.add('hidden');
+    document.querySelector('#shareGameWithScreenshotBtn').classList.add('hidden');
   }
 }
 
@@ -575,7 +602,7 @@ class Game {
     this.takeSet(takenSet);
     let errors = this.validateState(oldDeck, oldTable, takenSet);
     errors.forEach(err => console.error(err));
-    if (this.table.length > TABLE_SIZE) console.log(`${this.table.length / SET_SIZE} rows on table`);
+    // if (this.table.length > TABLE_SIZE) console.log(`${this.table.length / SET_SIZE} rows on table`);
   }
 
   async playTillEnd(moveDelay=50) {
@@ -608,7 +635,6 @@ if (localStorage.colors !== undefined) {
 }
 
 window.addEventListener('hashchange', e => {
-  console.log(e);
   game.startGame();
 });
 

@@ -16,6 +16,7 @@
     <link rel="icon" href="icons/icon-512.png" sizes="512x512">
 
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script async src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   </head>
 
   <body>
@@ -48,9 +49,9 @@
       </div>
       <div class="game-board"></div>
       <div class="game-buttons-container">
-        <button id="hintBtn" class="game-button hidden">HINT</button>
-        <button id="add3Btn" class="game-button hidden">ADD 3</button>
-        <button id="newGameBtn" class="game-button hidden">NEW GAME</button>
+        <button id="hintBtn" class="game-btn hidden">HINT</button>
+        <button id="add3Btn" class="game-btn hidden">ADD 3</button>
+        <button id="newGameBtn" class="game-btn hidden">NEW GAME</button>
       </div>
     </div>
 
@@ -96,6 +97,7 @@
         <img id="qrcode">
         <button id="copyUrlBtn">Copy URL</button>
         <button id="shareGameBtn">Share</button>
+        <button id="shareGameWithScreenshotBtn">Share with screenshot</button>
 
         <div class="buttons">
           <button class="close">Close</button>
