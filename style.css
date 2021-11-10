@@ -19,8 +19,9 @@ html, body {
   user-select: none;
 }
 
-input, label, button, .top-btn, .game-btn, .card {
+input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
   cursor: pointer;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
 .hidden {
@@ -265,7 +266,6 @@ input, label, button, .top-btn, .game-btn, .card {
 }
 
 #fullscreenBtn {
-  cursor: pointer;
   position: fixed;
   right: 15px;
   bottom: 15px;
