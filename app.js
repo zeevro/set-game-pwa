@@ -178,6 +178,7 @@ function initModals() {
   });
 
   document.querySelector('#shareBtn').addEventListener('click', () => {
+    shareStateCheckbox.checked = true;
     populateShareModal();
     document.querySelector('#shareModal').classList.add('active');
   });
