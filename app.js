@@ -34,7 +34,9 @@ const deckProgress = document.querySelector('#deckProgress');
 const deckProgressLabel = document.querySelector('#deckProgressLabel');
 const container = document.querySelector('.container');
 const gameBoard = document.querySelector('.game-board');
+const endGameScreen = document.querySelector('.end-game-screen');
 const newGameBtn = document.querySelector('#newGameBtn');
+const gameButtonsContainer = document.querySelector('.game-buttons-container');
 const hintBtn = document.querySelector('#hintBtn');
 const add3Btn = document.querySelector('#add3Btn');
 const qrCodeContainer = document.querySelector('#qrcode');
@@ -245,6 +247,24 @@ function initGameButtons() {
   });
 }
 
+function initTimeCounting() {
+  const handler = () => {
+    if (!game.gameFinished) {
+      if (document.visibilityState === 'visible') {
+        // console.log('resume counting');
+        game.timeCountStart = new Date();
+      } else if (game.timeCountStart !== null) {
+        // console.log('pause counting');
+        game.statistics.timeTaken += new Date() - game.timeCountStart;
+        game.timeCountStart = null;
+        localStorage.statistics = game.statistics;
+      }
+    }
+  }
+  document.addEventListener('visibilitychange', handler);
+  return handler;
+}
+
 function toast(text, ttl=3000) {
   if (this.alive === undefined) this.alive = [];
   let idx = this.alive.indexOf(false);
@@ -269,6 +289,42 @@ function toast(text, ttl=3000) {
       }
     }, 400);
   }, ttl);
+}
+
+class Statistics {
+  constructor() {
+    this.timeTaken = 0;
+    this.setsTaken = 0;
+    this.mistakes = 0;
+    this.hints = 0;
+    this.mostCards = 0;
+    this.mostSets = 0;
+  }
+
+  static fromJSON(json) {
+    let ret = new Statistics();
+    Object.entries(JSON.parse(json)).filter(([k, v]) => ret.hasOwnProperty(k)).forEach(([k, v]) => ret[k] = v);
+    return ret;
+  }
+
+  toString() {
+    return JSON.stringify(this);
+  }
+
+  get timeTakenStr() {
+    let time = this.timeTaken;
+
+    let ret = `${(time / 1000 % 60).toFixed(2)}s`;
+
+    if (time = Math.floor(time / 60000)) {
+      ret = `${time % 60}m ${ret}`;
+
+      if (time = Math.floor(time / 60)) {
+        ret = `${time % 60}h ${ret}`;
+      }
+    }
+    return ret;
+  }
 }
 
 class Card {
@@ -423,13 +479,22 @@ class Game {
     this.sets = [];
     this.oldCards = {};
 
-    if (localStorage.settings !== undefined) {
+    this.timeCountStart = null;
+    this.countingTime = false;
+
+    try {
       this.settings = JSON.parse(localStorage.settings);
-    } else {
+    } catch {
       this.settings = {
         autoDeal: true,
         hints: false,
       };
+    }
+
+    try {
+      this.statistics = Statistics.fromJSON(localStorage.statistics);
+    } catch {
+      this.statistics = new Statistics();
     }
   }
 
@@ -480,16 +545,24 @@ class Game {
     return document.querySelector(`.card[data-card-value="${card.toByte()}"]`);
   }
 
-  foulFlash() {
-    container.classList.add('bad-set');
-    setTimeout(() => container.classList.remove('bad-set'), 800);
+  mistakeFlash() {
+    container.classList.add('mistake-flash');
+    setTimeout(() => container.classList.remove('mistake-flash'), 800);
+    this.statistics.mistakes += 1;
   }
 
   deal() {
     this.sets = this.table.allSets();
-    while (this.deck.length && (this.table.length < TABLE_SIZE || (!this.sets.length && this.settings.autoDeal))) {
-      this.table.push(...this.deck.splice(-SET_SIZE));
-      this.sets = this.table.allSets();
+    if (!this.gameFinished) {
+      while (this.deck.length && (this.table.length < TABLE_SIZE || (!this.sets.length && this.settings.autoDeal))) {
+        this.table.push(...this.deck.splice(-SET_SIZE));
+        this.sets = this.table.allSets();
+      }
+      this.statistics.mostCards = Math.max(this.statistics.mostCards, this.table.length);
+      this.statistics.mostSets = Math.max(this.statistics.mostSets, this.sets.length);
+    } else if (this.timeCountStart !== null) {
+      this.statistics.timeTaken += new Date() - this.timeCountStart;
+      this.timeCountStart = null;
     }
     this.renderTable();
   }
@@ -503,6 +576,7 @@ class Game {
     } else {
       this.table = this.table.without(indices);
     }
+    this.statistics.setsTaken += 1;
     this.deal();
   }
 
@@ -515,19 +589,23 @@ class Game {
     if (cards.isSet()) {
       this.takeSet(cards);
     } else {
-      this.foulFlash();
+      this.mistakeFlash();
     }
   }
 
   renderTable() {
+    gameBoard.classList.toggle('hidden', this.gameFinished);
+    gameButtonsContainer.classList.toggle('hidden', this.gameFinished);
+    endGameScreen.classList.toggle('hidden', !this.gameFinished);
+
     localStorage.state = this.dumpState();
+    localStorage.statistics = this.statistics;
 
     deckProgress.value = DECK_SIZE - this.deck.length;
     deckProgressLabel.innerHTML = `Cards in deck: ${this.deck.length}`;
 
-    hintBtn.classList.toggle('hidden', !this.settings.hints || this.gameFinished);
-    add3Btn.classList.toggle('hidden', this.settings.autoDeal || this.gameFinished);
-    newGameBtn.classList.toggle('hidden', !this.gameFinished);
+    hintBtn.classList.toggle('hidden', !this.settings.hints);
+    add3Btn.classList.toggle('hidden', this.settings.autoDeal);
 
     gameBoard.innerHTML = this.table.map((card, idx) => card.toHtml(this.oldCards[idx])).join('');
     this.oldCards = {};
@@ -540,6 +618,21 @@ class Game {
         this.clickHandler(e);
       });
     });
+
+    if (this.gameFinished) {
+      document.querySelector('#timeTaken').innerHTML = this.statistics.timeTakenStr;
+      document.querySelector('#setsTaken').innerHTML = this.statistics.setsTaken;
+      document.querySelector('#mistakes').innerHTML = this.statistics.mistakes;
+      document.querySelector('#hints').innerHTML = this.statistics.hints;
+      document.querySelector('#cardsLeft').innerHTML = this.table.length;
+      document.querySelector('#mostCards').innerHTML = this.statistics.mostCards;
+      document.querySelector('#mostSets').innerHTML = this.statistics.mostSets;
+    } else {
+
+      if (this.timeCountStart === null) {
+        this.timeCountStart = new Date();
+      }
+    }
   }
 
   startGame() {
@@ -550,13 +643,18 @@ class Game {
   newGame() {
     this.deck = CardArray.randomDeck();
     this.table = new CardArray();
+    this.statistics = new Statistics();
     this.deal();
+    timeCountingHandler();
   }
 
   hint() {
     if (!this.sets.length) {
-      if (!this.settings.autoDeal) this.add3();
-      return;
+      if (!this.settings.autoDeal) {
+        this.add3();
+        this.statistics.hints += 1;
+        return;
+      }
     }
     let hinted = CardArray.fromNodeList(document.querySelectorAll('.game-board .card.hinted'));
     if (hinted.length >= SET_SIZE) return;
@@ -564,12 +662,13 @@ class Game {
     let hintedSet = availableSets.random();
     let cardToHint = hintedSet.filter(card => !hinted.includes(card)).random();
     this.getCardElement(cardToHint).classList.add('hinted');
+    this.statistics.hints += 1;
   }
 
   add3() {
     if (!this.deck.length) return;
     if (this.table.length >= TABLE_SIZE && this.sets.length) {
-      this.foulFlash();
+      this.mistakeFlash();
       return;
     }
     this.table.push(...this.deck.splice(-SET_SIZE));
@@ -628,6 +727,8 @@ initWakeLock();
 initPwaFeatures();
 initModals();
 initGameButtons();
+
+let timeCountingHandler = initTimeCounting();
 
 let game = new Game();
 

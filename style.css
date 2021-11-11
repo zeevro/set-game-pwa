@@ -8,6 +8,7 @@
   --selected-displacement-x: 4px;
   --selected-displacement-y: 7px;
   --hint-color: yellow;
+  --statistics-value-color: lightblue;
 }
 
 html, body {
@@ -25,7 +26,7 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .container {
@@ -36,8 +37,8 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
   overflow: hidden;
 }
 
-.bad-set {
-  animation: bad-set 0.8s;
+.mistake-flash {
+  animation: mistake-flash 0.8s;
 }
 
 .top-bar {
@@ -285,6 +286,37 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
   content: url("gear-2-glowing.svg");
 }
 
+.end-game-screen {
+  color: whitesmoke;
+  align-self: center;
+  width: 100%;
+}
+
+.end-game-screen > .title {
+  font-size: xx-large;
+  margin-top: 20px;
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+.end-game-screen > .statistic {
+  font-size: x-large;
+  margin-left: 10%;
+  margin-top: 10px;
+}
+
+.end-game-screen > .statistic > span {
+  color: var(--statistics-value-color);
+  font-weight: bold;
+}
+
+.end-game-screen > button {
+  display: block;
+  font-size: xx-large;
+  margin: 2em auto;
+  padding: 0.5em;
+}
+
 @media (display-mode: fullscreen) {
   #fullscreenBtn {
     display: none;
@@ -297,7 +329,7 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
   }
 }
 
-@keyframes bad-set {
+@keyframes mistake-flash {
   0% {
     background-color: darkred;
   }

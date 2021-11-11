@@ -47,11 +47,38 @@
           <img src="share.svg" alt="Share">
         </div>
       </div>
+
       <div class="game-board"></div>
+
+      <div class="end-game-screen hidden">
+        <div class="title">Game Over</div>
+        <div class="statistic">
+          Time taken: <span id="timeTaken"></span>
+        </div>
+        <div class="statistic">
+          Sets taken: <span id="setsTaken"></span>
+        </div>
+        <div class="statistic">
+          Mistakes: <span id="mistakes"></span>
+        </div>
+        <div class="statistic">
+          Hints: <span id="hints"></span>
+        </div>
+        <div class="statistic">
+          Cards left on table: <span id="cardsLeft"></span>
+        </div>
+        <div class="statistic">
+          Most cards on table: <span id="mostCards"></span>
+        </div>
+        <div class="statistic">
+          Most sets on table: <span id="mostSets"></span>
+        </div>
+        <button id="newGameBtn">NEW GAME</button>
+      </div>
+
       <div class="game-buttons-container">
         <button id="hintBtn" class="game-btn hidden">HINT</button>
         <button id="add3Btn" class="game-btn hidden">ADD 3</button>
-        <button id="newGameBtn" class="game-btn hidden">NEW GAME</button>
       </div>
     </div>
 
