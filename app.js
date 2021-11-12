@@ -179,8 +179,9 @@ function initModals() {
     game.renderTable();
   }));
 
-  document.querySelector('#settingsNewGameBtn').addEventListener('click', () => {
+  document.querySelector('#settingsNewGameBtn').addEventListener('click', e => {
     game.newGame();
+    e.target.closest('.modal').classList.remove('active');
   });
 
   document.querySelector('#shareBtn').addEventListener('click', () => {
