@@ -4,8 +4,12 @@ window.addEventListener("load", () => {
   }
 });
 
+function randInt(suprimum) {
+  return Math.floor(Math.random() * suprimum);
+}
+
 Array.prototype.random = function() {
-  return this[Math.floor(Math.random() * this.length)];
+  return this[randInt(this.length)];
 }
 
 function sleep(ms) {
@@ -403,35 +407,20 @@ class Card {
 }
 
 class CardArray extends Array {
-  static randomDeck() {
-    let deck = new this();
-    for (let number of [1, 2, 3]) {
-      for (let fill of ['solid', 'striped', 'blank']) {
-        for (let color of ['red', 'purple', 'green']) {
-          for (let shape of ['diamond', 'squiggle', 'oval']) {
-            let card = new Card(number, fill, color, shape);
-            deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, card);
-          }
-        }
-      }
-    }
-    return deck;
-  }
-
   static fromNodeList(nodes) {
     return this.from(nodes).map(elem => Card.fromByte(elem.dataset.cardValue))
   }
 
   combinations(size) {
     if (size <= 0 || size > this.length) {
-      return new this.constructor();
+      return new CardArray();
     }
 
     if (size == 1) {
-      return this.map(n => this.constructor.of(n));
+      return this.map(n => CardArray.of(n));
     }
 
-    return this.slice(0, this.length - size + 1).flatMap((n, i) => this.slice(i + 1).combinations(size - 1).map(rest => this.constructor.of(n).concat(rest)));
+    return this.slice(0, this.length - size + 1).flatMap((n, i) => this.slice(i + 1).combinations(size - 1).map(rest => CardArray.of(n).concat(rest)));
   }
 
   allSets() {
@@ -463,12 +452,42 @@ class CardArray extends Array {
     return this.map(card => card.toString()).join(' ');
   }
 
-  pluck(cards) {
+  indicesOf(cards) {
     return Array.from(cards.map(card => this.indexOf(card)));
   }
 
-  without(indices) {
-    return this.filter((card, idx) => !indices.includes(idx));
+  without(cardsOrIndices) {
+    if (!(cardsOrIndices instanceof Array)) cardsOrIndices = [cardsOrIndices];
+    if (!cardsOrIndices.length) return this;
+    if (cardsOrIndices[0] instanceof Card) return this.filter(card => !cardsOrIndices.includes(card));
+    return this.filter((card, idx) => !cardsOrIndices.includes(idx));
+  }
+
+  with(cards) {
+    if (cards instanceof Array) return this.concat(...cards);
+    return this.concat(cards);
+  }
+}
+
+class Decks {
+  static * #allCards() {
+    for (let number of [1, 2, 3]) {
+      for (let fill of ['solid', 'striped', 'blank']) {
+        for (let color of ['red', 'purple', 'green']) {
+          for (let shape of ['diamond', 'squiggle', 'oval']) {
+            yield new Card(number, fill, color, shape);
+          }
+        }
+      }
+    }
+  }
+
+  static randomDeck() {
+    let deck = new CardArray();
+    for (let card of this.#allCards()) {
+      deck.splice(randInt(deck.length + 1), 0, card);
+    }
+    return deck;
   }
 }
 
@@ -538,7 +557,7 @@ class Game {
       }
     }
 
-    this.deck = CardArray.randomDeck();
+    this.deck = Decks.randomDeck();
   }
 
   getCardElement(card) {
@@ -568,7 +587,7 @@ class Game {
   }
 
   takeSet(cards) {
-    let indices = this.table.pluck(cards);
+    let indices = this.table.indicesOf(cards);
     this.sets = this.table.without(indices).allSets();
     if (this.deck.length && (this.table.length <= TABLE_SIZE || !this.sets.length)) {
       this.oldCards = Object.fromEntries(zip(indices, cards));
@@ -641,7 +660,7 @@ class Game {
   }
 
   newGame() {
-    this.deck = CardArray.randomDeck();
+    this.deck = Decks.randomDeck();
     this.table = new CardArray();
     this.statistics = new Statistics();
     this.deal();
@@ -683,10 +702,10 @@ class Game {
     if (this.deck.length && this.table.length < TABLE_SIZE) errors.push(`Table too small: ${this.table.length}`);
     if (this.deck.length && !this.sets) errors.push('No sets on table');
     if (oldTable.length <= this.table.length) {
-      oldTable.pluck(takenSet).forEach(idx => {
+      oldTable.indicesOf(takenSet).forEach(idx => {
         if (!this.getCardElement(this.table[idx]).classList.contains('new')) errors.push(`Card was not marked new: ${idx}`);
       });
-      if (this.table.length > TABLE_SIZE && oldTable.without(oldTable.pluck(takenSet)).containsSet()) errors.push('Redundant cards on table');
+      if (this.table.length > TABLE_SIZE && oldTable.without(takenSet).containsSet()) errors.push('Redundant cards on table');
     }
     return errors;
   }
