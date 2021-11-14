@@ -267,6 +267,7 @@ function initTimeCounting() {
     }
   }
   document.addEventListener('visibilitychange', handler);
+  // TODO: Add 'pagehide' event for Safari on iOS
   return handler;
 }
 
@@ -712,17 +713,18 @@ class Game {
   }
 
   step() {
-    if (!this.sets.length) {
-      if (!this.settings.autoDeal) this.add3();
-      return;
-    }
     let oldDeck = this.deck.slice();
     let oldTable = this.table.slice();
-    let takenSet = this.sets.random()
-    this.takeSet(takenSet);
+    let takenSet;
+    if (!this.sets.length) {
+      takenSet = new CardArray();
+      if (!this.settings.autoDeal) this.add3();
+    } else {
+      takenSet = this.sets.random()
+      this.takeSet(takenSet);
+    }
     let errors = this.validateState(oldDeck, oldTable, takenSet);
     errors.forEach(err => console.error(err));
-    // if (this.table.length > TABLE_SIZE) console.log(`${this.table.length / SET_SIZE} rows on table`);
   }
 
   async playTillEnd(moveDelay=50) {
@@ -753,11 +755,11 @@ let timeCountingHandler = initTimeCounting();
 let game = new Game();
 
 if (localStorage.colors !== undefined) {
-  Object.entries(JSON.parse(localStorage.colors)).forEach(([color, value]) => document.documentElement.style.setProperty(`--${color}`, value));
+  Object.entries(JSON.parse(localStorage.colors)).forEach(([color, value]) => {
+    document.documentElement.style.setProperty(`--${color}`, value)
+  });
 }
 
-window.addEventListener('hashchange', e => {
-  game.startGame();
-});
+window.addEventListener('hashchange', () => { game.startGame(); });
 
 game.startGame();
