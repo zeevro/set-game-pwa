@@ -49,10 +49,20 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
 }
 
 #deckProgress {
-  height: 100%;
+  height: 30px;
   width: 100%;
   grid-column: 1;
   grid-row: 1;
+  margin-top: auto;
+  margin-bottom: auto;
+  border-radius: 25px;
+  overflow: hidden;
+}
+
+#deckProgress > div {
+  height: 100%;
+  background-color: #0075ff;
+  transition: width 0.4s ease;
 }
 
 #deckProgressLabel {

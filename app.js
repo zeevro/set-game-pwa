@@ -34,7 +34,7 @@ const SET_SIZE = 3;
 const DECK_SIZE = SET_SIZE ** 4;
 const TABLE_SIZE = SET_SIZE * 4;
 
-const deckProgress = document.querySelector('#deckProgress');
+const deckProgress = document.querySelector('#deckProgress > div');
 const deckProgressLabel = document.querySelector('#deckProgressLabel');
 const container = document.querySelector('.container');
 const gameBoard = document.querySelector('.game-board');
@@ -621,7 +621,7 @@ class Game {
     localStorage.state = this.dumpState();
     localStorage.statistics = this.statistics;
 
-    deckProgress.value = DECK_SIZE - this.deck.length;
+    deckProgress.style.width = `${(DECK_SIZE - this.deck.length) / DECK_SIZE * 100}%`;
     deckProgressLabel.innerHTML = `Cards in deck: ${this.deck.length}`;
 
     hintBtn.classList.toggle('hidden', !this.settings.hints);
