@@ -43,36 +43,38 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
 
 .top-bar {
   height: 50px;
-  display: flex;
-}
-
-.progress-container {
-  height: 100%;
-  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 50px 50px;
+  grid-template-rows: 1fr;
 }
 
 #deckProgress {
   height: 100%;
   width: 100%;
+  grid-column: 1;
+  grid-row: 1;
 }
 
 #deckProgressLabel {
+  grid-column: 1;
+  grid-row: 1;
+  margin: auto;
   text-align: center;
   font-size: 120%;
-  position: absolute;
-  top: calc(25px - 0.6em);
-  left: 0;
-  right: 100px;
   color: black;
   text-shadow: -1px -1px 1px lightblue, 1px -1px 1px lightblue, -1px 1px 1px lightblue, 1px 1px 1px lightblue;
 }
 
-.top-btn {
-  padding: 5px;
+#settingsBtn {
+  background: content-box url('gear-2.svg') center/80% no-repeat;
 }
 
-.top-btn img {
-  height: 100%;
+#settingsBtn.glowing {
+  background: content-box url('gear-2-glowing.svg') center/80% no-repeat;
+}
+
+#shareBtn {
+  background: content-box url('share.svg') center/80% no-repeat;
 }
 
 .game-buttons-container {
@@ -280,10 +282,6 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
 
 #installBtn {
   animation: glow 1.5s infinite;
-}
-
-#settingsBtn.glowing > img {
-  content: url("gear-2-glowing.svg");
 }
 
 .end-game-screen {
