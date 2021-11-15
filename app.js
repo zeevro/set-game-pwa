@@ -382,20 +382,27 @@ class Card {
       squiggle: "M38.4,63.4c0,16.1,11,19.9,10.6,28.3c-0.5,9.2-21.1,12.2-33.4,3.8s-15.8-21.2-9.3-38c3.7-7.5,4.9-14,4.8-20 c0-16.1-11-19.9-10.6-28.3C1,0.1,21.6-3,33.9,5.5s15.8,21.2,9.3,38C40.4,50.6,38.5,57.4,38.4,63.4z",
       oval: "M25,99.5C14.2,99.5,5.5,90.8,5.5,80V20C5.5,9.2,14.2,0.5,25,0.5S44.5,9.2,44.5,20v60 C44.5,90.8,35.8,99.5,25,99.5z",
     }
-    let fillStr = () => {
-      switch (this.fill) {
+    const fillStr = card => {
+      switch (card.fill) {
         case 'blank': return 'none';
-        case 'striped': return `url(#striped-${this.color})`;
-        case 'solid': return `var(--${this.color})`;
+        case 'striped': return `url(#striped-${card.color})`;
+        case 'solid': return `var(--${card.color})`;
       }
     }
-    let svg = `<svg viewbox="-6 -6 62 112"><path d="${paths[this.shape]}" fill="${fillStr()}" /></svg>`;
-
-    return `<div class="card ${this.color}${oldCard !== undefined ? ' new' : ''}" data-card-value="${this.toByte()}">
-      <div class="card-content">
-        ${svg.repeat(this.number)}
-      </div>
+    const svg = card => `<svg viewbox="-6 -6 62 112"><path d="${paths[card.shape]}" fill="${fillStr(card)}" /></svg>`;
+    const content = (card, ...extraClasses) => `<div class="card-content ${card.color}${extraClasses.length ? ' ' + extraClasses.join(' ') : ''}">
+      ${svg(card).repeat(card.number)}
     </div>`;
+
+    let elem = document.createElement('div');
+    elem.classList.add('card');
+    elem.dataset.cardValue = this.toByte();
+    if (oldCard !== undefined) {
+      elem.innerHTML = content(this, 'new') + content(oldCard, 'old');
+    } else {
+      elem.innerHTML = content(this);
+    }
+    return elem.outerHTML;
   }
 
   equals(other) {
@@ -705,7 +712,7 @@ class Game {
     if (this.deck.length && !this.sets) errors.push('No sets on table');
     if (oldTable.length <= this.table.length) {
       oldTable.indicesOf(takenSet).forEach(idx => {
-        if (!this.getCardElement(this.table[idx]).classList.contains('new')) errors.push(`Card was not marked new: ${idx}`);
+        if (!this.getCardElement(this.table[idx]).querySelector('.new') === null) errors.push(`Card was not marked new: ${idx}`);
       });
       if (this.table.length > TABLE_SIZE && oldTable.without(takenSet).containsSet()) errors.push('Redundant cards on table');
     }
