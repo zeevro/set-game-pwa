@@ -104,20 +104,22 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
   width: 100%;
   max-width: 60vh;
   align-self: center;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  column-gap: 10px;
+  display: flex;
+  flex-flow: row wrap;
   align-items: center;
   align-content: space-evenly;
-  justify-content: center;
+  justify-content: space-evenly;
   padding: 0 6px;
 }
 
 .card {
-  padding-top: 60%;
+  margin: 5px;
+  width: calc(33.33% - 10px);
+  padding-top: 20%;
   position: relative;
   perspective: 1000px;
   border-radius: 10px;
+  margin: 5px;
 }
 
 .card-content {
