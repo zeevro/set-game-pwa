@@ -50,13 +50,12 @@ input, label, button, .top-btn, .game-btn, .card, #fullscreenBtn {
 
 #deckProgress {
   height: 30px;
-  width: 100%;
   grid-column: 1;
   grid-row: 1;
-  margin-top: auto;
-  margin-bottom: auto;
-  border-radius: 25px;
+  margin: auto 0 auto 5px;
+  border-radius: 10px;
   overflow: hidden;
+  border: 1px solid gray;
 }
 
 #deckProgress > div {
